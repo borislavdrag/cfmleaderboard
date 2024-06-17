@@ -8,10 +8,29 @@
 </head>
 <body>
     <div class="container">
-        <h1>CrossFit Munich Vereinsmeisterschaft</h1>
+        <div class="header">
+            <img src="cfm.jpeg" alt="CrossFit Munich Logo" class="logo">
+            <h1>CrossFit Munich Vereinsmeisterschaft</h1>
+        </div>
         <div class="tabs">
+            <div class="tab" onclick="showTab('announcements')">Announcements</div>
+            <div class="tab" onclick="showTab('workouts')">Workouts</div>
+            <div class="tab" onclick="showTab('heats')">Heats</div>
+            <div class="tab-separator"></div>
             <div class="tab active" onclick="showTab('men')">Men</div>
             <div class="tab" onclick="showTab('women')">Women</div>
+        </div>
+        <div class="tab-content" id="announcements-content">
+            <!-- Announcements content goes here -->
+            <p>Announcements will be posted here.</p>
+        </div>
+        <div class="tab-content" id="workouts-content">
+            <!-- Workouts content goes here -->
+            <p>Workouts details will be posted here.</p>
+        </div>
+        <div class="tab-content" id="heats-content">
+            <!-- Heats content goes here -->
+            <p>Heats schedule will be posted here.</p>
         </div>
         <div class="table-container active" id="men-container">
             <table id="men">

@@ -74,11 +74,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function showTab(tabId) {
     const tabs = document.querySelectorAll('.tab');
-    const containers = document.querySelectorAll('.table-container');
+    const tabContents = document.querySelectorAll('.tab-content, .table-container');
     tabs.forEach(tab => tab.classList.remove('active'));
-    containers.forEach(container => container.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
     document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
-    document.getElementById(`${tabId}-container`).classList.add('active');
+    document.getElementById(`${tabId}-content`)?.classList.add('active');
+    document.getElementById(`${tabId}-container`)?.classList.add('active');
 }
 
 function sortTable(tableId, columnIndex, order) {
