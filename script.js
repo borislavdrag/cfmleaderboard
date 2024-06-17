@@ -35,6 +35,24 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching CSV data:', error);
         });
 
+    fetch('workouts.csv')
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n').slice(1).filter(row => row.trim() !== '');
+            const workouts = {};
+
+            rows.forEach(row => {
+                const [workout, ...descriptionParts] = row.split(',');
+                const description = descriptionParts.join(',').trim().replace(/\\n/g, '<br>');
+                workouts[workout.trim()] = description;
+            });
+
+            window.workouts = workouts;
+        })
+        .catch(error => {
+            console.error('Error fetching workouts CSV data:', error);
+        });
+
     function calculateEventRanks(data) {
         const eventCount = data[0].events.length;
         const eventRanks = Array.from({ length: eventCount }, () => []);
@@ -70,40 +88,50 @@ document.addEventListener('DOMContentLoaded', function() {
             tbody.innerHTML += row;
         });
     }
-});
 
-function showTab(tabId) {
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content, .table-container');
-    tabs.forEach(tab => tab.classList.remove('active'));
-    tabContents.forEach(content => content.classList.remove('active'));
-    document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
-    document.getElementById(`${tabId}-content`)?.classList.add('active');
-    document.getElementById(`${tabId}-container`)?.classList.add('active');
-}
-
-function sortTable(tableId, columnIndex, order) {
-    const table = document.getElementById(tableId);
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.rows);
-
-    rows.sort((a, b) => {
-        const cellA = a.cells[columnIndex].textContent.trim();
-        const cellB = b.cells[columnIndex].textContent.trim();
-
-        if (columnIndex > 0) {
-            const numA = parseFloat(cellA);
-            const numB = parseFloat(cellB);
-            return order === 'asc' ? numA - numB : numB - numA;
+    window.showTab = function(tabId) {
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content, .table-container');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+        document.getElementById(`${tabId}-content`)?.classList.add('active');
+        document.getElementById(`${tabId}-container`)?.classList.add('active');
+        if (tabId === 'workouts') {
+            document.getElementById('workout-subtabs').classList.add('active');
         } else {
-            return order === 'asc' ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+            document.getElementById('workout-subtabs').classList.remove('active');
         }
-    });
+    }
 
-    rows.forEach(row => tbody.appendChild(row));
+    window.showWorkout = function(workoutNumber) {
+        const workoutDetails = document.getElementById('workout-details');
+        workoutDetails.innerHTML = window.workouts[workoutNumber] || 'Workout details not found.';
+    }
 
-    const ths = table.querySelectorAll('th');
-    ths.forEach(th => th.classList.remove('sorted-asc', 'sorted-desc'));
-    const th = ths[columnIndex];
-    th.classList.add(order === 'asc' ? 'sorted-asc' : 'sorted-desc');
-}
+    window.sortTable = function(tableId, columnIndex, order) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.rows);
+
+        rows.sort((a, b) => {
+            const cellA = a.cells[columnIndex].textContent.trim();
+            const cellB = b.cells[columnIndex].textContent.trim();
+
+            if (columnIndex > 0) {
+                const numA = parseFloat(cellA);
+                const numB = parseFloat(cellB);
+                return order === 'asc' ? numA - numB : numB - numA;
+            } else {
+                return order === 'asc' ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+            }
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+
+        const ths = table.querySelectorAll('th');
+        ths.forEach(th => th.classList.remove('sorted-asc', 'sorted-desc'));
+        const th = ths[columnIndex];
+        th.classList.add(order === 'asc' ? 'sorted-asc' : 'sorted-desc');
+    }
+});

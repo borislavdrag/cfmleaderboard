@@ -20,13 +20,20 @@
             <div class="tab active" onclick="showTab('men')">Men</div>
             <div class="tab" onclick="showTab('women')">Women</div>
         </div>
+        <div class="subtabs" id="workout-subtabs">
+            <div class="subtab" onclick="showWorkout(1)">Workout 1</div>
+            <div class="subtab" onclick="showWorkout(2)">Workout 2</div>
+            <div class="subtab" onclick="showWorkout(3)">Workout 3</div>
+            <div class="subtab" onclick="showWorkout(4)">Workout 4</div>
+            <div class="subtab" onclick="showWorkout(5)">Workout 5</div>
+        </div>
         <div class="tab-content" id="announcements-content">
             <!-- Announcements content goes here -->
             <p>Announcements will be posted here.</p>
         </div>
         <div class="tab-content" id="workouts-content">
             <!-- Workouts content goes here -->
-            <p>Workouts details will be posted here.</p>
+            <div id="workout-details"></div>
         </div>
         <div class="tab-content" id="heats-content">
             <!-- Heats content goes here -->
