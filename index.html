@@ -1,4 +1,135 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competition Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #343a40;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            margin: 0 5px;
+        }
+        .tab.active {
+            background-color: #0056b3;
+        }
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        table.active {
+            display: table;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Competition Leaderboard</h1>
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('men')">Men</div>
+            <div class="tab" onclick="showTab('women')">Women</div>
+        </div>
+        <table id="men" class="active">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Event 1</th>
+                    <th>Event 2</th>
+                    <th>Event 3</th>
+                    <th>Event 4</th>
+                    <th>Event 5</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>John</td>
+                    <td>95</td>
+                    <td>88</td>
+                    <td>90</td>
+                    <td>85</td>
+                    <td>87</td>
+                </tr>
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table>
+        <table id="women">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Event 1</th>
+                    <th>Event 2</th>
+                    <th>Event 3</th>
+                    <th>Event 4</th>
+                    <th>Event 5</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Alice</td>
+                    <td>90</td>
+                    <td>85</td>
+                    <td>87</td>
+                    <td>88</td>
+                    <td>92</td>
+                </tr>
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function showTab(tabId) {
+            const tabs = document.querySelectorAll('.tab');
+            const tables = document.querySelectorAll('table');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tables.forEach(table => table.classList.remove('active'));
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
