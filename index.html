@@ -29,17 +29,17 @@
         .tab {
             padding: 10px 20px;
             cursor: pointer;
-            background-color: #007bff;
+            background-color: #ff0000;
             color: white;
             margin: 0 5px;
             border-radius: 5px;
             transition: background-color 0.3s;
         }
         .tab:hover {
-            background-color: #0056b3;
+            background-color: #cc0000;
         }
         .tab.active {
-            background-color: #0056b3;
+            background-color: #cc0000;
         }
         table {
             margin: 0 auto;
@@ -60,14 +60,34 @@
             text-align: left;
         }
         th {
-            background-color: #007bff;
+            background-color: #ff0000;
             color: white;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+        }
+        th:hover {
+            background-color: #cc0000;
+        }
+        th.sorted-asc::after {
+            content: ' ▲';
+            position: absolute;
+            right: 10px;
+        }
+        th.sorted-desc::after {
+            content: ' ▼';
+            position: absolute;
+            right: 10px;
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
         tr:hover {
             background-color: #ddd;
+        }
+        .small-text {
+            font-size: 0.8em;
+            color: gray;
         }
     </style>
 </head>
@@ -81,13 +101,14 @@
         <table id="men" class="active">
             <thead>
                 <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Event 1</th>
-                    <th>Event 2</th>
-                    <th>Event 3</th>
-                    <th>Event 4</th>
-                    <th>Event 5</th>
+                    <th onclick="sortTable('men', 0, 'asc')">Name</th>
+                    <th onclick="sortTable('men', 1, 'asc')">Rank</th>
+                    <th onclick="sortTable('men', 2, 'desc')">Score</th>
+                    <th onclick="sortTable('men', 3, 'desc')">Event 1</th>
+                    <th onclick="sortTable('men', 4, 'desc')">Event 2</th>
+                    <th onclick="sortTable('men', 5, 'desc')">Event 3</th>
+                    <th onclick="sortTable('men', 6, 'desc')">Event 4</th>
+                    <th onclick="sortTable('men', 7, 'desc')">Event 5</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -95,13 +116,14 @@
         <table id="women">
             <thead>
                 <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Event 1</th>
-                    <th>Event 2</th>
-                    <th>Event 3</th>
-                    <th>Event 4</th>
-                    <th>Event 5</th>
+                    <th onclick="sortTable('women', 0, 'asc')">Name</th>
+                    <th onclick="sortTable('women', 1, 'asc')">Rank</th>
+                    <th onclick="sortTable('women', 2, 'desc')">Score</th>
+                    <th onclick="sortTable('women', 3, 'desc')">Event 1</th>
+                    <th onclick="sortTable('women', 4, 'desc')">Event 2</th>
+                    <th onclick="sortTable('women', 5, 'desc')">Event 3</th>
+                    <th onclick="sortTable('women', 6, 'desc')">Event 4</th>
+                    <th onclick="sortTable('women', 7, 'desc')">Event 5</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -112,31 +134,58 @@
             fetch('data.csv')
                 .then(response => response.text())
                 .then(data => {
-                    const rows = data.split('\n').slice(1); // Split CSV rows and ignore the header
-                    const menTable = document.querySelector('#men tbody');
-                    const womenTable = document.querySelector('#women tbody');
+                    const rows = data.split('\n').slice(1).filter(row => row.trim() !== '');
+                    const menData = [];
+                    const womenData = [];
+
                     rows.forEach(row => {
-                        if (row.trim() !== '') { // Ignore empty lines
-                            const columns = row.split(',');
-                            const category = columns[0].trim();
-                            const rank = columns[1].trim();
-                            const name = columns[2].trim();
-                            const event1 = columns[3].trim();
-                            const event2 = columns[4].trim();
-                            const event3 = columns[5].trim();
-                            const event4 = columns[6].trim();
-                            const event5 = columns[7].trim();
-                            const tableRow = `<tr><td>${rank}</td><td>${name}</td><td>${event1}</td><td>${event2}</td><td>${event3}</td><td>${event4}</td><td>${event5}</td></tr>`;
-                            if (category === 'men') {
-                                menTable.innerHTML += tableRow;
-                            } else if (category === 'women') {
-                                womenTable.innerHTML += tableRow;
-                            }
+                        const [category, name, ...events] = row.split(',').map(item => item.trim());
+                        const eventScores = events.map(event => parseInt(event, 10));
+                        const score = eventScores.reduce((sum, event) => sum + event, 0);
+                        const participant = { name, score, events: eventScores };
+                        if (category === 'men') {
+                            menData.push(participant);
+                        } else if (category === 'women') {
+                            womenData.push(participant);
                         }
                     });
+
+                    const calculateEventRanks = (data) => {
+                        const eventCount = data[0].events.length;
+                        const eventRanks = Array.from({ length: eventCount }, () => []);
+                        data.forEach(participant => {
+                            participant.events.forEach((score, index) => {
+                                eventRanks[index].push({ name: participant.name, score });
+                            });
+                        });
+                        eventRanks.forEach(ranks => ranks.sort((a, b) => b.score - a.score));
+                        return eventRanks.map(ranks => ranks.reduce((map, { name }, rank) => (map[name] = rank + 1, map), {}));
+                    };
+
+                    const menEventRanks = calculateEventRanks(menData);
+                    const womenEventRanks = calculateEventRanks(womenData);
+
+                    const renderTable = (data, eventRanks, tableId) => {
+                        data.sort((a, b) => b.score - a.score);
+                        const tbody = document.querySelector(`#${tableId} tbody`);
+                        tbody.innerHTML = '';
+                        data.forEach((participant, rank) => {
+                            const eventCells = participant.events.map((score, index) => `<td>${score} <span class="small-text">(${eventRanks[index][participant.name]})</span></td>`).join('');
+                            const row = `<tr>
+                                <td>${participant.name}</td>
+                                <td>${rank + 1}</td>
+                                <td>${participant.score}</td>
+                                ${eventCells}
+                            </tr>`;
+                            tbody.innerHTML += row;
+                        });
+                    };
+
+                    renderTable(menData, menEventRanks, 'men');
+                    renderTable(womenData, womenEventRanks, 'women');
                 })
                 .catch(error => {
-                    console.error('Error fetching CSV data:', error); // Debugging line
+                    console.error('Error fetching CSV data:', error);
                 });
         });
 
@@ -147,6 +196,32 @@
             tables.forEach(table => table.classList.remove('active'));
             document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
             document.getElementById(tabId).classList.add('active');
+        }
+
+        function sortTable(tableId, columnIndex, order) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.rows);
+
+            rows.sort((a, b) => {
+                const cellA = a.cells[columnIndex].textContent.trim();
+                const cellB = b.cells[columnIndex].textContent.trim();
+
+                if (columnIndex > 0) {
+                    const numA = parseFloat(cellA);
+                    const numB = parseFloat(cellB);
+                    return order === 'asc' ? numA - numB : numB - numA;
+                } else {
+                    return order === 'asc' ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                }
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+
+            const ths = table.querySelectorAll('th');
+            ths.forEach(th => th.classList.remove('sorted-asc', 'sorted-desc'));
+            const th = ths[columnIndex];
+            th.classList.add(order === 'asc' ? 'sorted-asc' : 'sorted-desc');
         }
     </script>
 </body>
