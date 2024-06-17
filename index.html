@@ -1,24 +1,25 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competition Leaderboard</title>
+    <title>CrossFit Munich Vereinsmeisterschaft</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
         }
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
         h1 {
-            color: #343a40;
+            color: #333;
+            text-align: center;
+            padding: 20px 0;
         }
         .tabs {
             display: flex;
@@ -31,6 +32,11 @@
             background-color: #007bff;
             color: white;
             margin: 0 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .tab:hover {
+            background-color: #0056b3;
         }
         .tab.active {
             background-color: #0056b3;
@@ -39,9 +45,11 @@
             margin: 0 auto;
             border-collapse: collapse;
             width: 100%;
-            background-color: #fff;
+            background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             display: none;
+            border-radius: 5px;
+            overflow: hidden;
         }
         table.active {
             display: table;
@@ -58,11 +66,14 @@
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+        tr:hover {
+            background-color: #ddd;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Competition Leaderboard</h1>
+        <h1>CrossFit Munich Vereinsmeisterschaft</h1>
         <div class="tabs">
             <div class="tab active" onclick="showTab('men')">Men</div>
             <div class="tab" onclick="showTab('women')">Women</div>
@@ -79,18 +90,7 @@
                     <th>Event 5</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>John</td>
-                    <td>95</td>
-                    <td>88</td>
-                    <td>90</td>
-                    <td>85</td>
-                    <td>87</td>
-                </tr>
-                <!-- Add more rows as needed -->
-            </tbody>
+            <tbody></tbody>
         </table>
         <table id="women">
             <thead>
@@ -104,21 +104,30 @@
                     <th>Event 5</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Alice</td>
-                    <td>90</td>
-                    <td>85</td>
-                    <td>87</td>
-                    <td>88</td>
-                    <td>92</td>
-                </tr>
-                <!-- Add more rows as needed -->
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('data.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\\n').slice(1);
+                    const menTable = document.querySelector('#men tbody');
+                    const womenTable = document.querySelector('#women tbody');
+                    lines.forEach(line => {
+                        const [category, rank, name, event1, event2, event3, event4, event5] = line.split(',');
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${rank}</td><td>${name}</td><td>${event1}</td><td>${event2}</td><td>${event3}</td><td>${event4}</td><td>${event5}</td>`;
+                        if (category.trim() === 'men') {
+                            menTable.appendChild(row);
+                        } else if (category.trim() === 'women') {
+                            womenTable.appendChild(row);
+                        }
+                    });
+                });
+        });
+
         function showTab(tabId) {
             const tabs = document.querySelectorAll('.tab');
             const tables = document.querySelectorAll('table');
@@ -128,43 +137,5 @@
             document.getElementById(tabId).classList.add('active');
         }
     </script>
-</body>
-</html>!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competition Leaderboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        table { margin: 0 auto; border-collapse: collapse; width: 50%; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #f2f2f2; }
-    </style>
-</head>
-<body>
-    <h1>Competition Leaderboard</h1>
-    <table>
-        <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Score</th>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td>Alice</td>
-            <td>95</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>Bob</td>
-            <td>89</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>Charlie</td>
-            <td>85</td>
-        </tr>
-    </table>
 </body>
 </html>
