@@ -1,5 +1,7 @@
-category,name,event1,event2,event3,event4,event5
-men,John,95,88,90,85,87
-men,Michael,92,85,87,88,84
-women,Alice,90,85,87,88,92
-women,Emma,89,87,90,85,88
+category,name,event1_score,event1_string,event2_score,event2_string,event3_score,event3_string,event4_score,event4_string,event5_score,event5_string
+men,Boris,100,12:40,100,14:20,100,13:10,85,15:00,87,12:30
+men,Matt Fraser,92,13:00,85,15:30,87,13:50,88,14:10,90,15:20
+women,Marie,100,129,95,15:40,100,14:30,90,15:10,100,12:23
+women,Tia Toomey,95,120,100,15:39,90,15:00,90,15:10,95,CAP+2
+women,Laura Horvath,90,110,90,15:41,85,15:01,100,15:00,90,CAP+3
+women,Danielle Brandon,85,83,85,15:50,95,14:40,95,15:05,85,CAP+10
