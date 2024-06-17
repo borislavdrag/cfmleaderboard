@@ -112,19 +112,31 @@
             fetch('data.csv')
                 .then(response => response.text())
                 .then(data => {
-                    const lines = data.split('\\n').slice(1);
+                    const rows = data.split('\n').slice(1); // Split CSV rows and ignore the header
                     const menTable = document.querySelector('#men tbody');
                     const womenTable = document.querySelector('#women tbody');
-                    lines.forEach(line => {
-                        const [category, rank, name, event1, event2, event3, event4, event5] = line.split(',');
-                        const row = document.createElement('tr');
-                        row.innerHTML = `<td>${rank}</td><td>${name}</td><td>${event1}</td><td>${event2}</td><td>${event3}</td><td>${event4}</td><td>${event5}</td>`;
-                        if (category.trim() === 'men') {
-                            menTable.appendChild(row);
-                        } else if (category.trim() === 'women') {
-                            womenTable.appendChild(row);
+                    rows.forEach(row => {
+                        if (row.trim() !== '') { // Ignore empty lines
+                            const columns = row.split(',');
+                            const category = columns[0].trim();
+                            const rank = columns[1].trim();
+                            const name = columns[2].trim();
+                            const event1 = columns[3].trim();
+                            const event2 = columns[4].trim();
+                            const event3 = columns[5].trim();
+                            const event4 = columns[6].trim();
+                            const event5 = columns[7].trim();
+                            const tableRow = `<tr><td>${rank}</td><td>${name}</td><td>${event1}</td><td>${event2}</td><td>${event3}</td><td>${event4}</td><td>${event5}</td></tr>`;
+                            if (category === 'men') {
+                                menTable.innerHTML += tableRow;
+                            } else if (category === 'women') {
+                                womenTable.innerHTML += tableRow;
+                            }
                         }
                     });
+                })
+                .catch(error => {
+                    console.error('Error fetching CSV data:', error); // Debugging line
                 });
         });
 
