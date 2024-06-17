@@ -94,7 +94,7 @@ h1 {
     display: block;
 }
 #workout-details {
-    font-size: 2em; /* Slightly larger font size */
+    font-size: 1.2em; /* Slightly larger font size */
     text-align: center; /* Center the workout details */
     margin-top: 20px;
 }
