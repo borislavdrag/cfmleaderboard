@@ -107,6 +107,11 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showWorkout = function(workoutNumber) {
         const workoutDetails = document.getElementById('workout-details');
         workoutDetails.innerHTML = window.workouts[workoutNumber] || 'Workout details not found.';
+
+        // Update the active subtab
+        const subtabs = document.querySelectorAll('.subtab');
+        subtabs.forEach(subtab => subtab.classList.remove('active'));
+        document.querySelector(`.subtab[onclick="showWorkout(${workoutNumber})"]`).classList.add('active');
     }
 
     window.sortTable = function(tableId, columnIndex, order) {
