@@ -194,6 +194,24 @@ th.sorted-desc::after {
     position: absolute;
     right: 10px;
 }
+/* Adjust sorting arrows positioning */
+th.sorted-asc::after,
+th.sorted-desc::after {
+    position: absolute;
+    right: 5px; /* Reduce right position to make more space for the text */
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+    th.sorted-asc::after,
+    th.sorted-desc::after {
+        right: 2px; /* Further reduce right position for mobile */
+        font-size: 0.8em; /* Adjust font size of arrows for mobile */
+    }
+}
 
 tr:nth-child(even) {
     background-color: #f2f2f2;
