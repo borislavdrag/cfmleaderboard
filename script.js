@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const [category, name, ...eventData] = row.split(',').map(item => item.trim());
                 const events = [];
                 for (let i = 0; i < eventData.length; i += 2) {
-                    const score = parseInt(eventData[i], 10);
+                    const score = eventData[i] ? parseInt(eventData[i], 10) : 0; // Ensure missing scores are treated as 0
                     events.push({ score: isNaN(score) ? 0 : score, string: eventData[i + 1] || '' });
                 }
                 const score = events.reduce((sum, event) => sum + event.score, 0);
