@@ -4,27 +4,67 @@ body {
     margin: 0;
     padding: 0;
 }
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
+
 .header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+    justify-content: center; /* Center the header content */
+    padding: 10px;
+    background-color: white; /* Set the header background to white */
 }
+
+.header img {
+    height: 50px;
+    margin-right: 10px;
+}
+
+.header h1 {
+    font-size: 1.5em;
+    margin: 0;
+    text-align: center; /* Ensure the title is centered */
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header img {
+        height: 40px;
+        margin-right: 0;
+        margin-bottom: 5px; /* Add space below the logo */
+    }
+
+    .header h1 {
+        font-size: 1.2em;
+        margin: 0;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+}
+
 .logo {
     height: 2.5em; /* Increase the logo size to 2.5em */
     margin-right: 10px; /* Add some space between the logo and the title */
 }
+
 h1 {
     color: #333;
     font-size: 2em;
     margin: 0;
 }
+
 .tabs {
     display: flex;
     justify-content: center;
@@ -32,6 +72,7 @@ h1 {
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
+
 .tab {
     padding: 15px 30px;
     cursor: pointer;
@@ -43,27 +84,33 @@ h1 {
     font-weight: bold;
     font-size: 18px;
 }
+
 .tab-separator {
     width: 2px;
     height: 30px;
     background-color: #ddd;
     margin: 0 10px;
 }
+
 .tab:hover {
     background-color: #cc0000;
 }
+
 .tab.active {
     background-color: #cc0000;
 }
+
 .subtabs {
     display: none;
     justify-content: center;
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
+
 .subtabs.active {
     display: flex;
 }
+
 .subtab {
     padding: 10px 20px;
     cursor: pointer;
@@ -75,38 +122,47 @@ h1 {
     font-weight: bold;
     font-size: 16px;
 }
+
 .subtab:hover {
     background-color: #0056b3;
 }
+
 .subtab.active {
     background-color: #0056b3;
     color: #e0e0e0; /* Gray out the text when active */
 }
+
 .table-container {
     display: none;
     overflow-x: auto;
     margin-bottom: 20px; /* Add some space between the tables */
 }
+
 .table-container.active {
     display: block;
 }
+
 .tab-content {
     display: none;
     margin-bottom: 20px;
 }
+
 .tab-content.active {
     display: block;
 }
+
 #workout-details {
     font-size: 1.2em; /* Slightly larger font size */
     text-align: center; /* Center the workout details */
     margin-top: 20px;
     white-space: pre-line; /* Ensure newlines are rendered */
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
 }
+
 th, td {
     min-width: 100px; /* Adjust width for better mobile view */
     white-space: nowrap;
@@ -114,6 +170,7 @@ th, td {
     padding: 8px; /* Adjust padding for better mobile view */
     text-align: left;
 }
+
 th {
     background-color: #ff0000;
     color: white;
@@ -121,29 +178,36 @@ th {
     cursor: pointer;
     position: relative;
 }
+
 th:hover {
     background-color: #cc0000;
 }
+
 th.sorted-asc::after {
     content: ' ▲';
     position: absolute;
     right: 10px;
 }
+
 th.sorted-desc::after {
     content: ' ▼';
     position: absolute;
     right: 10px;
 }
+
 tr:nth-child(even) {
     background-color: #f2f2f2;
 }
+
 tr:hover {
     background-color: #ddd;
 }
+
 .event-details {
     font-size: 1em;
     font-weight: bold;
 }
+
 .event-extra {
     display: flex;
     justify-content: space-between;
@@ -156,13 +220,16 @@ tr:hover {
     .logo {
         height: 2em; /* Adjust logo size for mobile */
     }
+
     h1 {
         font-size: 1.5em; /* Adjust font size for mobile */
     }
+
     .tab, .subtab {
         padding: 10px 20px; /* Adjust padding for tabs on mobile */
         font-size: 14px; /* Adjust font size for tabs on mobile */
     }
+
     th, td {
         min-width: 80px; /* Further adjust width for mobile */
         padding: 6px; /* Further adjust padding for mobile */
@@ -175,9 +242,11 @@ tr:hover {
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
+
 .subtabs.active {
     display: flex;
 }
+
 .subtab {
     padding: 10px 20px;
     cursor: pointer;
@@ -189,9 +258,11 @@ tr:hover {
     font-weight: bold;
     font-size: 16px;
 }
+
 .subtab:hover {
     background-color: #0056b3;
 }
+
 .subtab.active {
     background-color: #0056b3;
     color: #e0e0e0; /* Gray out the text when active */
@@ -204,38 +275,6 @@ tr:hover {
 
 #heat-table {
     display: none; /* Initially hide the table */
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px; /* Add some space between the table and other content */
-}
-
-#heat-table th, #heat-table td {
-    min-width: 100px; /* Adjust width for better mobile view */
-    white-space: nowrap;
-    border: 1px solid #ddd;
-    padding: 8px; /* Adjust padding for better mobile view */
-    text-align: left;
-}
-
-#heat-table th {
-    background-color: #ff0000;
-    color: white;
-    text-transform: uppercase;
-    cursor: pointer;
-    position: relative;
-}
-
-#heat-table th:hover {
-    background-color: #cc0000;
-}
-
-#heat-table tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-#heat-table tr:hover {
-    background-color: #ddd;
-}
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px; /* Add some space between the table and other content */
@@ -286,4 +325,17 @@ tr:hover {
 
 #announcement-list li strong {
     color: #ff0000; /* Highlight timestamp */
+}
+
+table th {
+    position: relative;
+    white-space: nowrap;
+}
+
+table th .sort-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
