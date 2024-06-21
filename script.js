@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const [category, name, ...eventData] = row.split(',').map(item => item.trim());
                 const events = [];
                 for (let i = 0; i < eventData.length; i += 2) {
-                    events.push({ score: parseInt(eventData[i], 10), string: eventData[i + 1] });
+                    const score = parseInt(eventData[i], 10);
+                    events.push({ score: isNaN(score) ? 0 : score, string: eventData[i + 1] || '' });
                 }
                 const score = events.reduce((sum, event) => sum + event.score, 0);
                 const participant = { name, score, events };
@@ -75,59 +76,87 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 	function calculateEventRanks(data) {
-        const eventCount = data[0].events.length;
-        const eventRanks = Array.from({ length: eventCount }, () => []);
-        data.forEach(participant => {
-            participant.events.forEach((event, index) => {
-                eventRanks[index].push({ name: participant.name, score: event.score });
-            });
+    const eventCount = data[0].events.length;
+    const eventRanks = Array.from({ length: eventCount }, () => []);
+    data.forEach(participant => {
+        participant.events.forEach((event, index) => {
+            eventRanks[index].push({ name: participant.name, score: event.score });
         });
-        eventRanks.forEach(ranks => ranks.sort((a, b) => b.score - a.score));
-        return eventRanks.map(ranks => ranks.reduce((map, { name }, rank) => (map[name] = rank + 1, map), {}));
-    }
+    });
+    eventRanks.forEach(ranks => ranks.sort((a, b) => b.score - a.score));
 
+    return eventRanks.map(ranks => {
+        const rankMap = {};
+        let currentRank = 1;
+        ranks.forEach((rank, index) => {
+            if (index > 0 && ranks[index].score < ranks[index - 1].score) {
+                currentRank = index + 1;
+            }
+            rankMap[rank.name] = currentRank;
+        });
+        return rankMap;
+    });
+}
     function renderTable(data, eventRanks, tableId) {
-        data.sort((a, b) => b.score - a.score);
-        const tbody = document.querySelector(`#${tableId} tbody`);
-        tbody.innerHTML = '';
-        data.forEach((participant, rank) => {
-            const eventCells = participant.events.map((event, index) => `
-                <td>
-                    <div class="event-details">${event.score}</div>
-                    <div class="event-extra">
-                        <span>${eventRanks[index][participant.name]}</span>
-                        <span>(${event.string})</span>
-                    </div>
-                </td>
-            `).join('');
-            const row = `<tr>
-                <td>${participant.name}</td>
-                <td>${rank + 1}</td>
-                <td>${participant.score}</td>
-                ${eventCells}
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-    }
+    // Sort data by overall score, and then by the highest event ranks
+    data.sort((a, b) => {
+        if (b.score === a.score) {
+            const ranksA = a.events.map((event, i) => eventRanks[i][a.name]).sort((x, y) => x - y);
+            const ranksB = b.events.map((event, i) => eventRanks[i][b.name]).sort((x, y) => x - y);
+            for (let i = 0; i < ranksA.length; i++) {
+                if (ranksA[i] !== ranksB[i]) {
+                    return ranksA[i] - ranksB[i];
+                }
+            }
+            return 0; // They are completely tied
+        }
+        return b.score - a.score;
+    });
 
-	function renderHeatTable(heats) {
-    const tbody = document.querySelector('#heat-table tbody');
+    const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = '';
+    let previousRank = 1;
+    let currentRank = 1;
+    data.forEach((participant, index) => {
+        const eventCells = participant.events.map((event, i) => `
+            <td>
+                <div class="event-details">${event.score}</div>
+                ${event.string ? `<div class="event-extra"><span>${eventRanks[i][participant.name]}</span> (${event.string})</div>` : `<div class="event-extra"><span>${eventRanks[i][participant.name]}</span></div>`}
+            </td>
+        `).join('');
+        
+        if (index > 0 && data[index - 1].score === participant.score) {
+            // Compare highest ranks to determine if they are tied
+            const ranksA = participant.events.map((event, i) => eventRanks[i][participant.name]).sort((x, y) => x - y);
+            const ranksB = data[index - 1].events.map((event, i) => eventRanks[i][data[index - 1].name]).sort((x, y) => x - y);
+            let isTied = true;
+            for (let i = 0; i < ranksA.length; i++) {
+                if (ranksA[i] !== ranksB[i]) {
+                    isTied = false;
+                    break;
+                }
+            }
+            if (isTied) {
+                currentRank = previousRank; // They are tied
+            } else {
+                currentRank = index + 1;
+            }
+        } else {
+            currentRank = index + 1;
+        }
+        previousRank = currentRank;
 
-    Object.keys(heats).forEach(heat => {
-        const row = `
-            <tr>
-                <td>${heat}</td>
-                <td>${heats[heat]}</td>
-            </tr>
-        `;
+        const row = `<tr>
+            <td>${participant.name}</td>
+            <td>${currentRank}</td>
+            <td>${participant.score}</td>
+            ${eventCells}
+        </tr>`;
         tbody.innerHTML += row;
     });
 }
 
-
-    
-    window.showTab = function(tabId) {
+window.showTab = function(tabId) {
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content, .table-container');
     tabs.forEach(tab => tab.classList.remove('active'));
