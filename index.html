@@ -27,19 +27,36 @@
             <div class="subtab" onclick="showWorkout(4)">Workout 4</div>
             <div class="subtab" onclick="showWorkout(5)">Workout 5</div>
         </div>
-        <div class="tab-content" id="announcements-content">
-            <!-- Announcements content goes here -->
-            <p>Announcements will be posted here.</p>
+        <div class="subtabs" id="heats-subtabs">
+            <div class="subtab" onclick="showHeat(1)">Heat 1</div>
+            <div class="subtab" onclick="showHeat(2)">Heat 2</div>
+            <div class="subtab" onclick="showHeat(3)">Heat 3</div>
+            <div class="subtab" onclick="showHeat(4)">Heat 4</div>
+            <div class="subtab" onclick="showHeat(5)">Heat 5</div>
         </div>
-        <div class="tab-content" id="workouts-content">
-            <!-- Workouts content goes here -->
+        <div class="tab-content" id="announcements-content">
+    <div id="announcement-details">
+        <ul id="announcement-list"></ul>
+    </div>
+</div>     
+
+<div class="tab-content" id="workouts-content">
             <div id="workout-details"></div>
         </div>
         <div class="tab-content" id="heats-content">
-            <!-- Heats content goes here -->
-            <p>Heats schedule will be posted here.</p>
-        </div>
-        <div class="table-container active" id="men-container">
+	    <div id="heat-details">
+		<table id="heat-table">
+		    <thead>
+			<tr>
+			    <th>Heat</th>
+			    <th>Description</th>
+			</tr>
+		    </thead>
+		    <tbody></tbody>
+		</table>
+	    </div>
+	</div>      
+	<div class="table-container active" id="men-container">
             <table id="men">
                 <thead>
                     <tr>

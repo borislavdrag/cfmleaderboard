@@ -35,25 +35,46 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching CSV data:', error);
         });
 
-    fetch('workouts.csv')
-        .then(response => response.text())
-        .then(data => {
-            const rows = data.split('\n').slice(1).filter(row => row.trim() !== '');
-            const workouts = {};
+  fetch('workouts.csv')
+    .then(response => response.text())
+    .then(data => {
+        const rows = data.split('\n').slice(1).filter(row => row.trim() !== '');
+        const workouts = {};
 
-            rows.forEach(row => {
-                const [workout, ...descriptionParts] = row.split(',');
-                const description = descriptionParts.join(',').trim().replace(/\\n/g, '<br>');
-                workouts[workout.trim()] = description;
-            });
-
-            window.workouts = workouts;
-        })
-        .catch(error => {
-            console.error('Error fetching workouts CSV data:', error);
+        rows.forEach(row => {
+            const [workout, ...descriptionParts] = row.split(',');
+            const description = descriptionParts.join(',').trim().replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+            workouts[workout.trim()] = description;
         });
 
-    function calculateEventRanks(data) {
+        window.workouts = workouts;
+    })
+    .catch(error => {
+        console.error('Error fetching workouts CSV data:', error);
+    });
+
+    fetch('heats.csv')
+    .then(response => response.text())
+    .then(data => {
+        const rows = data.split('\n').slice(1).filter(row => row.trim() !== '');
+        const heats = {};
+
+        rows.forEach(row => {
+            const [heat, ...descriptionParts] = row.split(',');
+            const description = descriptionParts.join(',').trim();
+            heats[`Heat ${heat.trim()}`] = description;
+        });
+
+        window.heats = heats;
+
+        // Debug: Log the parsed heats data to ensure it's correct
+        console.log('Heats Data:', window.heats);
+    })
+    .catch(error => {
+        console.error('Error fetching heats CSV data:', error);
+    });
+
+	function calculateEventRanks(data) {
         const eventCount = data[0].events.length;
         const eventRanks = Array.from({ length: eventCount }, () => []);
         data.forEach(participant => {
@@ -89,32 +110,143 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+	function renderHeatTable(heats) {
+    const tbody = document.querySelector('#heat-table tbody');
+    tbody.innerHTML = '';
+
+    Object.keys(heats).forEach(heat => {
+        const row = `
+            <tr>
+                <td>${heat}</td>
+                <td>${heats[heat]}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+
+    
     window.showTab = function(tabId) {
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content, .table-container');
-        tabs.forEach(tab => tab.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-        document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
-        document.getElementById(`${tabId}-content`)?.classList.add('active');
-        document.getElementById(`${tabId}-container`)?.classList.add('active');
-        if (tabId === 'workouts') {
-            document.getElementById('workout-subtabs').classList.add('active');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content, .table-container');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+    document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+    document.getElementById(`${tabId}-content`)?.classList.add('active');
+    document.getElementById(`${tabId}-container`)?.classList.add('active');
+    if (tabId === 'workouts') {
+        document.getElementById('workout-subtabs').classList.add('active');
+    } else {
+        document.getElementById('workout-subtabs').classList.remove('active');
+    }
+    if (tabId === 'heats') {
+            document.getElementById('heats-subtabs').classList.add('active');
+            document.getElementById('heat-table').style.display = 'none'; // Hide the table initially
         } else {
-            document.getElementById('workout-subtabs').classList.remove('active');
+            document.getElementById('heats-subtabs').classList.remove('active');
         }
     }
-
     window.showWorkout = function(workoutNumber) {
-        const workoutDetails = document.getElementById('workout-details');
-        workoutDetails.innerHTML = window.workouts[workoutNumber] || 'Workout details not found.';
+    	const workoutDetails = document.getElementById('workout-details');
+    	workoutDetails.innerHTML = window.workouts[workoutNumber] || 'Workout details not found.';
 
-        // Update the active subtab
-        const subtabs = document.querySelectorAll('.subtab');
-        subtabs.forEach(subtab => subtab.classList.remove('active'));
-        document.querySelector(`.subtab[onclick="showWorkout(${workoutNumber})"]`).classList.add('active');
+    	// Update the active subtab
+    	const subtabs = document.querySelectorAll('#workout-subtabs .subtab');
+    	subtabs.forEach(subtab => subtab.classList.remove('active'));
+    	document.querySelector(`#workout-subtabs .subtab[onclick="showWorkout(${workoutNumber})"]`).classList.add('active');
     }
 
-    window.sortTable = function(tableId, columnIndex, order) {
+   window.showHeat = function(heatNumber) {
+    const heatDetails = document.getElementById('heat-details');
+    const heatTable = document.getElementById('heat-table');
+    const heatTableBody = document.querySelector('#heat-table tbody');
+    heatTableBody.innerHTML = ''; // Clear previous heat details
+    heatTable.style.display = 'table'; // Show the table
+
+    const heatKey = `Heat ${heatNumber}`;
+    let heatDescription = window.heats[heatKey] || 'Heat details not found.';
+
+    // Remove quotation marks
+    heatDescription = heatDescription.replace(/(^"|"$)/g, '');
+
+    if (heatDescription !== 'Heat details not found.') {
+        const lines = heatDescription.split('\\n').map(line => line.trim()).filter(line => line);
+        const headers = lines[0].split(',').map(header => header.trim());
+        const dataRows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+
+        // Create table headers
+        let headerRow = '<tr>';
+        headers.forEach(header => {
+            headerRow += `<th>${header}</th>`;
+        });
+        headerRow += '</tr>';
+
+        document.querySelector('#heat-table thead').innerHTML = headerRow;
+
+        // Create table body rows
+        dataRows.forEach(row => {
+            let tableRow = '<tr>';
+            row.forEach(cell => {
+                // Check if the cell contains a name with brackets (judge's name)
+                const judgeMatch = cell.match(/^(.*)\((.*)\)$/);
+                if (judgeMatch) {
+                    const participant = judgeMatch[1].trim();
+                    const judge = judgeMatch[2].trim();
+                    tableRow += `<td>${participant}<br><span style="font-size: 0.8em; color: gray;">(${judge})</span></td>`;
+                } else {
+                    tableRow += `<td>${cell}</td>`;
+                }
+            });
+            tableRow += '</tr>';
+            heatTableBody.innerHTML += tableRow;
+        });
+    } else {
+        document.querySelector('#heat-table thead').innerHTML = '<tr><th>Heat</th><th>Description</th></tr>';
+        heatTableBody.innerHTML = `<tr><td>${heatKey}</td><td>${heatDescription}</td></tr>`;
+    }
+
+    // Update the active subtab
+    const subtabs = document.querySelectorAll('#heats-subtabs .subtab');
+    subtabs.forEach(subtab => subtab.classList.remove('active'));
+    document.querySelector(`#heats-subtabs .subtab[onclick="showHeat(${heatNumber})"]`).classList.add('active');
+}   
+
+
+fetch('announcements.csv')
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n').slice(1).filter(row => row.trim() !== '');
+            const announcements = [];
+
+            rows.forEach(row => {
+                const [timestamp, ...announcementParts] = row.split(',');
+                const announcement = announcementParts.join(',').trim();
+                announcements.push({ timestamp: timestamp.trim(), announcement });
+            });
+
+            displayAnnouncements(announcements);
+
+            // Debug: Log the parsed announcements data to ensure it's correct
+            console.log('Announcements Data:', announcements);
+        })
+        .catch(error => {
+            console.error('Error fetching announcements CSV data:', error);
+        });
+
+    function displayAnnouncements(announcements) {
+        const announcementList = document.getElementById('announcement-list');
+        announcementList.innerHTML = ''; // Clear previous announcements
+
+        announcements.forEach(({ timestamp, announcement }) => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `<strong>${timestamp}</strong>: ${announcement}`;
+            announcementList.appendChild(listItem);
+        });
+    }
+
+
+window.sortTable = function(tableId, columnIndex, order) {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.rows);
