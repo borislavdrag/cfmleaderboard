@@ -49,29 +49,60 @@ function parseWorkoutCSV(csvText) {
 }
 
 function calculateWorkoutRanks(participants) {
-    // Get the last place rank (total number of participants + 1)
-    const lastPlace = participants.length + 1;
-    
-    return participants
-        .sort((a, b) => {
-            // RX always above SC
-            if (a.rx !== b.rx) return a.rx ? -1 : 1;
-            
-            // Higher score is better
-            if (a.score !== b.score) return b.score - a.score;
-            
-            // If scores are equal, use tiebreak
-            return a.tiebreak.localeCompare(b.tiebreak);
-        })
-        .reduce((ranks, participant, index) => {
+    // First sort participants
+    const sortedParticipants = participants.sort((a, b) => {
+        // RX always above SC
+        if (a.rx !== b.rx) return a.rx ? -1 : 1;
+        
+        // Higher score is better
+        if (a.score !== b.score) return b.score - a.score;
+        
+        // If scores are equal, use tiebreak
+        return a.tiebreak.localeCompare(b.tiebreak);
+    });
+
+    // Then assign ranks, handling ties
+    const ranks = {};
+    let currentRank = 1;
+    let sameRankCount = 0;
+
+    sortedParticipants.forEach((participant, index) => {
+        if (index === 0) {
             ranks[participant.name] = {
-                rank: index + 1,
+                rank: 1,
                 score: participant.score,
                 tiebreak: participant.tiebreak,
                 rx: participant.rx
             };
-            return ranks;
-        }, {});
+        } else {
+            const prevParticipant = sortedParticipants[index - 1];
+            const samePerfomance = 
+                participant.rx === prevParticipant.rx && 
+                participant.score === prevParticipant.score && 
+                participant.tiebreak === prevParticipant.tiebreak;
+
+            if (samePerfomance) {
+                ranks[participant.name] = {
+                    rank: ranks[prevParticipant.name].rank,
+                    score: participant.score,
+                    tiebreak: participant.tiebreak,
+                    rx: participant.rx
+                };
+                sameRankCount++;
+            } else {
+                currentRank = index + 1;
+                ranks[participant.name] = {
+                    rank: currentRank,
+                    score: participant.score,
+                    tiebreak: participant.tiebreak,
+                    rx: participant.rx
+                };
+                sameRankCount = 0;
+            }
+        }
+    });
+
+    return ranks;
 }
 
 function processLeaderboardData(workouts) {
@@ -121,12 +152,68 @@ function processLeaderboardData(workouts) {
     
     // Calculate overall ranks
     function calculateOverallRanks(data) {
-        return Array.from(data.values())
-            .sort((a, b) => a.points - b.points)
-            .map((participant, index) => {
-                participant.overallRank = index + 1;
-                return participant;
+        const sortedParticipants = Array.from(data.values())
+            .sort((a, b) => {
+                // First compare points
+                if (a.points !== b.points) {
+                    return a.points - b.points;
+                }
+
+                // If points are equal, compare best ranks
+                const aRanks = Object.values(a.workouts)
+                    .map(w => w.rank)
+                    .sort((x, y) => x - y);
+                const bRanks = Object.values(b.workouts)
+                    .map(w => w.rank)
+                    .sort((x, y) => x - y);
+
+                // Compare each rank position until we find a difference
+                for (let i = 0; i < aRanks.length; i++) {
+                    if (aRanks[i] !== bRanks[i]) {
+                        return aRanks[i] - bRanks[i];
+                    }
+                }
+
+                // If all ranks are identical, they should tie
+                return 0;
             });
+
+        // Assign ranks with ties
+        let currentRank = 1;
+        let currentPoints = null;
+        let currentRanks = null;
+        let sameRankCount = 0;
+
+        sortedParticipants.forEach((participant, index) => {
+            const participantRanks = Object.values(participant.workouts)
+                .map(w => w.rank)
+                .sort((x, y) => x - y);
+
+            if (index === 0) {
+                participant.overallRank = 1;
+                currentPoints = participant.points;
+                currentRanks = participantRanks;
+            } else {
+                const prevParticipant = sortedParticipants[index - 1];
+                
+                // Check if this participant should tie with the previous one
+                const sameTotalPoints = participant.points === currentPoints;
+                const sameRanks = participantRanks.every((rank, i) => rank === currentRanks[i]);
+
+                if (sameTotalPoints && sameRanks) {
+                    participant.overallRank = prevParticipant.overallRank;
+                    sameRankCount++;
+                } else {
+                    currentRank = index + 1;
+                    participant.overallRank = currentRank;
+                    currentPoints = participant.points;
+                    currentRanks = participantRanks;
+                    sameRankCount = 0;
+                }
+            }
+        });
+
+        return sortedParticipants;
     }
     
     return {
