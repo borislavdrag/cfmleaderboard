@@ -177,40 +177,29 @@ th {
     text-transform: uppercase;
     cursor: pointer;
     position: relative;
+    padding-right: 20px; /* Make room for the arrow */
+}
+
+th::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+th.sorted-asc::after {
+    content: '▲';
+    font-size: 0.8em;
+}
+
+th.sorted-desc::after {
+    content: '▼';
+    font-size: 0.8em;
 }
 
 th:hover {
     background-color: #cc0000;
-}
-
-th.sorted-asc::after {
-    content: ' ▲';
-    position: absolute;
-    right: 10px;
-}
-
-th.sorted-desc::after {
-    content: ' ▼';
-    position: absolute;
-    right: 10px;
-}
-/* Adjust sorting arrows positioning */
-th.sorted-asc::after,
-th.sorted-desc::after {
-    position: absolute;
-    right: 5px; /* Reduce right position to make more space for the text */
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-}
-
-/* Media Queries for Mobile Responsiveness */
-@media (max-width: 768px) {
-    th.sorted-asc::after,
-    th.sorted-desc::after {
-        right: 2px; /* Further reduce right position for mobile */
-        font-size: 0.8em; /* Adjust font size of arrows for mobile */
-    }
 }
 
 tr:nth-child(even) {
@@ -221,16 +210,52 @@ tr:hover {
     background-color: #ddd;
 }
 
-.event-details {
-    font-size: 1em;
-    font-weight: bold;
+.workout-cell {
+    display: grid;
+    grid-template-areas: 
+        "rank . . rx"
+        "rank . score score";
+    grid-template-columns: auto 1fr auto auto;
+    min-height: 35px;  /* Reduced from 45px */
+    position: relative;
+    padding: 4px 8px;
 }
 
-.event-extra {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8em;
-    color: gray;
+.workout-rank {
+    grid-area: rank;
+    font-weight: 500;  /* Reduced from bold (700) to medium (500) */
+    color: #000;
+    font-size: 1.2em;  /* Reduced from 1.4em */
+    align-self: center;
+}
+
+.workout-rx {
+    grid-area: rx;
+    font-size: 0.65em;
+    text-transform: uppercase;
+    color: #aaa;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+    margin-right: -4px;
+}
+
+.workout-score {
+    grid-area: score;
+    color: #666;
+    font-size: 0.95em;
+    text-align: right;
+}
+
+.workout-tiebreak {
+    color: #999;
+    font-size: 0.85em;
+    margin-left: 6px;
+    display: inline-block;
+}
+
+/* Remove old event-related styles */
+.event-cell, .event-details, .event-extra {
+    display: none;
 }
 
 /* Media Queries for Mobile Responsiveness */
@@ -356,4 +381,15 @@ table th .sort-icon {
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
+}
+
+.overall-rank, .overall-points {
+    font-weight: bold;
+    text-align: center;
+}
+
+.workout-empty {
+    color: #ccc;
+    font-size: 1.2em;
+    font-weight: 500;
 }

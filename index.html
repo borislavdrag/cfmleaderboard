@@ -19,11 +19,9 @@
             <div class="tab" onclick="showTab('women')">Women</div>
         </div>
         <div class="subtabs" id="workout-subtabs">
-            <div class="subtab" onclick="showWorkout(1)">Workout 1</div>
-            <div class="subtab" onclick="showWorkout(2)">Workout 2</div>
-            <div class="subtab" onclick="showWorkout(3)">Workout 3</div>
-            <div class="subtab" onclick="showWorkout(4)">Workout 4</div>
-            <div class="subtab" onclick="showWorkout(5)">Workout 5</div>
+            <div class="subtab" onclick="showWorkout(1)">Workout 25.1</div>
+            <div class="subtab" onclick="showWorkout(2)">Workout 25.2</div>
+            <div class="subtab" onclick="showWorkout(3)">Workout 25.3</div>
         </div>
         <div class="tab-content" id="workouts-content">
             <div id="workout-details"></div>
@@ -32,14 +30,12 @@
             <table id="men">
                 <thead>
                     <tr>
-                        <th onclick="sortTable('men', 0, 'asc')">Name</th>
-                        <th onclick="sortTable('men', 1, 'asc')">Rank</th>
-                        <th onclick="sortTable('men', 2, 'desc')">Score</th>
-                        <th onclick="sortTable('men', 3, 'desc')">Event 1</th>
-                        <th onclick="sortTable('men', 4, 'desc')">Event 2</th>
-                        <th onclick="sortTable('men', 5, 'desc')">Event 3</th>
-                        <th onclick="sortTable('men', 6, 'desc')">Event 4</th>
-                        <th onclick="sortTable('men', 7, 'desc')">Event 5</th>
+                        <th onclick="sortTable('men', 'name')">Name</th>
+                        <th onclick="sortTable('men', 'rank')">Rank</th>
+                        <th onclick="sortTable('men', 'points')">Points</th>
+                        <th onclick="sortTable('men', 'workout1')">Workout 25.1</th>
+                        <th onclick="sortTable('men', 'workout2')">Workout 25.2</th>
+                        <th onclick="sortTable('men', 'workout3')">Workout 25.3</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -50,13 +46,11 @@
                 <thead>
                     <tr>
                         <th onclick="sortTable('women', 0, 'asc')">Name</th>
-                        <th onclick="sortTable('women', 1, 'asc')">Rank</th>
-                        <th onclick="sortTable('women', 2, 'desc')">Score</th>
-                        <th onclick="sortTable('women', 3, 'desc')">Event 1</th>
-                        <th onclick="sortTable('women', 4, 'desc')">Event 2</th>
-                        <th onclick="sortTable('women', 5, 'desc')">Event 3</th>
-                        <th onclick="sortTable('women', 6, 'desc')">Event 4</th>
-                        <th onclick="sortTable('women', 7, 'desc')">Event 5</th>
+                        <th>Rank</th>
+                        <th>Points</th>
+                        <th>Workout 25.1</th>
+                        <th>Workout 25.2</th>
+                        <th>Workout 25.3</th>
                     </tr>
                 </thead>
                 <tbody></tbody>

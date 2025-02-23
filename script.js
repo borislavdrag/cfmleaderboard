@@ -1,160 +1,186 @@
 document.addEventListener('DOMContentLoaded', function() {
-    Promise.all([
-        fetch('data.csv').then(response => response.text()),
-        fetch('workouts.csv').then(response => response.text())
-    ])
-    .then(([leaderboardData, workoutData]) => {
-        processLeaderboardData(parseCSV(leaderboardData));
-        processWorkoutData(parseCSV(workoutData));
-        
-        showWorkout(1);
-        showTab('men');
-    })
-    .catch(error => {
-        console.error('Error loading data:', error);
-        document.body.innerHTML += `<div style="color: red">Error loading data: ${error.message}</div>`;
-    });
+    loadLeaderboards();
 });
 
-function parseCSV(csvText) {
+async function loadLeaderboards() {
+    try {
+        // Load all available workout data
+        const workouts = {};
+        for (let i = 1; i <= 3; i++) {
+            try {
+                const response = await fetch(`leaderboard_25_${i}.csv`);
+                if (response.ok) {
+                    const text = await response.text();
+                    workouts[i] = parseWorkoutCSV(text);
+                }
+            } catch (error) {
+                console.log(`Workout 25.${i} data not available yet`);
+            }
+        }
+
+        // Process and display the data
+        const { menData, womenData } = processLeaderboardData(workouts);
+        renderTable(menData, 'men');
+        renderTable(womenData, 'women');
+        
+        // Show initial views
+        showWorkout(1);
+        showTab('men');
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+function parseWorkoutCSV(csvText) {
     return csvText
         .split('\n')
-        .slice(1)
-        .filter(row => row.trim() !== '')
-        .map(row => row.split(',').map(cell => cell.trim()));
+        .slice(1) // Skip header
+        .filter(row => row.trim())
+        .map(row => {
+            const [category, name, version, score, tiebreak] = row.split(',').map(cell => cell.trim());
+            return {
+                category: category.toLowerCase(),
+                name,
+                score: parseInt(score) || 0,
+                tiebreak: tiebreak || '',
+                rx: version.toLowerCase() === 'rx'
+            };
+        });
 }
 
-function processLeaderboardData(rows) {
-    const menData = [];
-    const womenData = [];
+function calculateWorkoutRanks(participants) {
+    // Get the last place rank (total number of participants + 1)
+    const lastPlace = participants.length + 1;
+    
+    return participants
+        .sort((a, b) => {
+            // RX always above SC
+            if (a.rx !== b.rx) return a.rx ? -1 : 1;
+            
+            // Higher score is better
+            if (a.score !== b.score) return b.score - a.score;
+            
+            // If scores are equal, use tiebreak
+            return a.tiebreak.localeCompare(b.tiebreak);
+        })
+        .reduce((ranks, participant, index) => {
+            ranks[participant.name] = {
+                rank: index + 1,
+                score: participant.score,
+                tiebreak: participant.tiebreak,
+                rx: participant.rx
+            };
+            return ranks;
+        }, {});
+}
 
-    rows.forEach(row => {
-        if (row.length < 3) return;
-        
-        const category = row[0].toLowerCase();
-        const name = row[1];
-        const eventData = row.slice(2);
-        
-        const events = [];
-        for (let i = 0; i < eventData.length; i += 2) {
-            const score = parseInt(eventData[i]) || 0;
-            const string = eventData[i + 1] || '';
-            events.push({ score, string });
-        }
-        
-        const totalScore = events.reduce((sum, event) => sum + event.score, 0);
-        const participant = { name, score: totalScore, events };
-
-        if (category === 'men') {
-            menData.push(participant);
-        } else if (category === 'women') {
-            womenData.push(participant);
-        }
+function processLeaderboardData(workouts) {
+    const menData = new Map();
+    const womenData = new Map();
+    
+    // First pass: collect all participant names
+    Object.values(workouts).forEach(participants => {
+        participants.forEach(p => {
+            const data = p.category === 'men' ? menData : womenData;
+            if (!data.has(p.name)) {
+                data.set(p.name, { name: p.name, workouts: {}, points: 0 });
+            }
+        });
     });
-
-    if (menData.length > 0) {
-        const menEventRanks = calculateEventRanks(menData);
-        renderTable(menData, menEventRanks, 'men');
+    
+    // Second pass: process workouts and calculate ranks
+    Object.entries(workouts).forEach(([workoutNum, participants]) => {
+        const menParticipants = participants.filter(p => p.category === 'men');
+        const womenParticipants = participants.filter(p => p.category === 'women');
+        
+        // Last place is the number of participants in this workout + 1
+        const menLastPlace = menParticipants.length + 1;
+        const womenLastPlace = womenParticipants.length + 1;
+        
+        const menRanks = calculateWorkoutRanks(menParticipants);
+        const womenRanks = calculateWorkoutRanks(womenParticipants);
+        
+        // Add workout data to participants
+        [
+            [menData, menRanks, menLastPlace],
+            [womenData, womenRanks, womenLastPlace]
+        ].forEach(([data, ranks, lastPlace]) => {
+            data.forEach((participant, name) => {
+                const result = ranks[name] || {
+                    rank: lastPlace,
+                    score: 0,
+                    tiebreak: '',
+                    rx: false
+                };
+                participant.workouts[workoutNum] = result;
+                participant.points = Object.values(participant.workouts)
+                    .reduce((sum, workout) => sum + workout.rank, 0);
+            });
+        });
+    });
+    
+    // Calculate overall ranks
+    function calculateOverallRanks(data) {
+        return Array.from(data.values())
+            .sort((a, b) => a.points - b.points)
+            .map((participant, index) => {
+                participant.overallRank = index + 1;
+                return participant;
+            });
     }
     
-    if (womenData.length > 0) {
-        const womenEventRanks = calculateEventRanks(womenData);
-        renderTable(womenData, womenEventRanks, 'women');
-    }
+    return {
+        menData: calculateOverallRanks(menData),
+        womenData: calculateOverallRanks(womenData)
+    };
 }
 
-function processWorkoutData(rows) {
-    const workouts = {};
-    rows.forEach(row => {
-        if (row.length < 2) return;
-        
-        const workoutNumber = row[0].trim();
-        const description = row.slice(1).join(',').trim()
-            .replace(/\\n/g, '<br>')
-            .replace(/\n/g, '<br>');
-        
-        workouts[workoutNumber] = description;
-    });
-    window.workouts = workouts;
-}
-
-function calculateEventRanks(data) {
-    const eventCount = data[0].events.length;
-    const eventRanks = Array.from({ length: eventCount }, () => []);
-    data.forEach(participant => {
-        participant.events.forEach((event, index) => {
-            eventRanks[index].push({ name: participant.name, score: event.score });
-        });
-    });
-    eventRanks.forEach(ranks => ranks.sort((a, b) => b.score - a.score));
-
-    return eventRanks.map(ranks => {
-        const rankMap = {};
-        let currentRank = 1;
-        ranks.forEach((rank, index) => {
-            if (index > 0 && ranks[index].score < ranks[index - 1].score) {
-                currentRank = index + 1;
-            }
-            rankMap[rank.name] = currentRank;
-        });
-        return rankMap;
-    });
-}
-
-function renderTable(data, eventRanks, tableId) {
-    data.sort((a, b) => {
-        if (b.score === a.score) {
-            const ranksA = a.events.map((event, i) => eventRanks[i][a.name]).sort((x, y) => x - y);
-            const ranksB = b.events.map((event, i) => eventRanks[i][b.name]).sort((x, y) => x - y);
-            for (let i = 0; i < ranksA.length; i++) {
-                if (ranksA[i] !== ranksB[i]) {
-                    return ranksA[i] - ranksB[i];
-                }
-            }
-            return 0;
-        }
-        return b.score - a.score;
-    });
-
+function renderTable(data, tableId) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = '';
-    let previousRank = 1;
-    let currentRank = 1;
     
-    data.forEach((participant, index) => {
-        const eventCells = participant.events.map((event, i) => `
-            <td>
-                <div class="event-details">${event.score}</div>
-                ${event.string ? `<div class="event-extra"><span>${eventRanks[i][participant.name]}</span> (${event.string})</div>` : `<div class="event-extra"><span>${eventRanks[i][participant.name]}</span></div>`}
-            </td>
-        `).join('');
+    data.forEach(participant => {
+        const workoutCells = [1, 2, 3].map(workoutNum => {
+            const workout = participant.workouts[workoutNum];
+            if (!workout) {
+                return '<td></td>';
+            }
+            
+            // If no score (empty workout), show rank and dash
+            if (!workout.score && !workout.tiebreak) {
+                return `
+                    <td>
+                        <div class="workout-cell">
+                            <span class="workout-rank">${workout.rank}</span>
+                            <span class="workout-score">
+                                <span class="workout-empty">—</span>
+                            </span>
+                        </div>
+                    </td>
+                `;
+            }
+            
+            return `
+                <td>
+                    <div class="workout-cell">
+                        <span class="workout-rank">${workout.rank}</span>
+                        <span class="workout-rx">${workout.rx ? 'rx' : 'sc'}</span>
+                        <span class="workout-score">
+                            ${workout.score}${workout.tiebreak ? `<span class="workout-tiebreak">(${workout.tiebreak})</span>` : ''}
+                        </span>
+                    </div>
+                </td>
+            `;
+        }).join('');
         
-        if (index > 0 && data[index - 1].score === participant.score) {
-            const ranksA = participant.events.map((event, i) => eventRanks[i][participant.name]).sort((x, y) => x - y);
-            const ranksB = data[index - 1].events.map((event, i) => eventRanks[i][data[index - 1].name]).sort((x, y) => x - y);
-            let isTied = true;
-            for (let i = 0; i < ranksA.length; i++) {
-                if (ranksA[i] !== ranksB[i]) {
-                    isTied = false;
-                    break;
-                }
-            }
-            if (isTied) {
-                currentRank = previousRank;
-            } else {
-                currentRank = index + 1;
-            }
-        } else {
-            currentRank = index + 1;
-        }
-        previousRank = currentRank;
-
-        const row = `<tr>
-            <td>${participant.name}</td>
-            <td>${currentRank}</td>
-            <td>${participant.score}</td>
-            ${eventCells}
-        </tr>`;
+        const row = `
+            <tr>
+                <td>${participant.name}</td>
+                <td class="overall-rank">${participant.overallRank}</td>
+                <td class="overall-points">${participant.points}</td>
+                ${workoutCells}
+            </tr>
+        `;
         tbody.innerHTML += row;
     });
 }
@@ -179,35 +205,88 @@ window.showTab = function(tabId) {
 
 window.showWorkout = function(workoutNumber) {
     const workoutDetails = document.getElementById('workout-details');
-    workoutDetails.innerHTML = window.workouts[workoutNumber] || 'Workout details not found.';
+    
+    // Fetch the workout description from the corresponding file
+    fetch(`25_${workoutNumber}.txt`)
+        .then(response => response.text())
+        .then(data => {
+            workoutDetails.innerHTML = data.replace(/\n/g, '<br>');
+        })
+        .catch(error => {
+            console.error('Error loading workout:', error);
+            workoutDetails.innerHTML = 'Error loading workout details';
+        });
 
     const subtabs = document.querySelectorAll('#workout-subtabs .subtab');
     subtabs.forEach(subtab => subtab.classList.remove('active'));
     document.querySelector(`#workout-subtabs .subtab[onclick="showWorkout(${workoutNumber})"]`).classList.add('active');
 };
 
-window.sortTable = function(tableId, columnIndex, order) {
+let currentSort = {
+    column: null,
+    direction: null
+};
+
+window.sortTable = function(tableId, column) {
     const table = document.getElementById(tableId);
+    
+    // Set initial direction or toggle existing
+    if (currentSort.column !== column) {
+        currentSort.column = column;
+        currentSort.direction = 'asc';  // Always start with ascending
+    } else {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    }
+
+    // Update header arrows
+    const headers = table.querySelectorAll('th');
+    headers.forEach(header => {
+        header.classList.remove('sorted-asc', 'sorted-desc');
+    });
+    const currentHeader = table.querySelector(`th[onclick="sortTable('${tableId}', '${column}')"]`);
+    currentHeader.classList.add(`sorted-${currentSort.direction}`);
+
     const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.rows);
+    const rows = Array.from(tbody.querySelectorAll('tr'));
 
+    // Sort the rows
     rows.sort((a, b) => {
-        const cellA = a.cells[columnIndex].textContent.trim();
-        const cellB = b.cells[columnIndex].textContent.trim();
+        let valueA, valueB;
 
-        if (columnIndex > 0) {
-            const numA = parseFloat(cellA);
-            const numB = parseFloat(cellB);
-            return order === 'asc' ? numA - numB : numB - numA;
+        switch(column) {
+            case 'name':
+                valueA = a.cells[0].textContent;
+                valueB = b.cells[0].textContent;
+                return currentSort.direction === 'asc' 
+                    ? valueA.localeCompare(valueB)
+                    : valueB.localeCompare(valueA);
+
+            case 'rank':
+                valueA = parseInt(a.cells[1].textContent);
+                valueB = parseInt(b.cells[1].textContent);
+                break;
+
+            case 'points':
+                valueA = parseInt(a.cells[2].textContent);
+                valueB = parseInt(b.cells[2].textContent);
+                break;
+
+            case 'workout1':
+            case 'workout2':
+            case 'workout3':
+                const workoutIndex = parseInt(column.slice(-1));
+                valueA = parseInt(a.cells[workoutIndex + 2].querySelector('.workout-rank').textContent);
+                valueB = parseInt(b.cells[workoutIndex + 2].querySelector('.workout-rank').textContent);
+                break;
+        }
+
+        if (currentSort.direction === 'asc') {
+            return valueA - valueB;
         } else {
-            return order === 'asc' ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+            return valueB - valueA;
         }
     });
 
+    // Reinsert rows in new order
     rows.forEach(row => tbody.appendChild(row));
-
-    const ths = table.querySelectorAll('th');
-    ths.forEach(th => th.classList.remove('sorted-asc', 'sorted-desc'));
-    const th = ths[columnIndex];
-    th.classList.add(order === 'asc' ? 'sorted-asc' : 'sorted-desc');
 };
