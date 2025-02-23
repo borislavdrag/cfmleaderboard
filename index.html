@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrossFit Munich Vereinsmeisterschaft</title>
+    <title>Friday Night Lights</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img src="cfm.jpeg" alt="CrossFit Munich Logo" class="logo">
-            <h1>CrossFit Munich Vereinsmeisterschaft</h1>
+            <h1>Friday Night Lights</h1>
         </div>
         <div class="tabs">
-            <div class="tab" onclick="showTab('announcements')">Announcements</div>
             <div class="tab" onclick="showTab('workouts')">Workouts</div>
-            <div class="tab" onclick="showTab('heats')">Heats</div>
             <div class="tab-separator"></div>
             <div class="tab active" onclick="showTab('men')">Men</div>
             <div class="tab" onclick="showTab('women')">Women</div>
@@ -27,36 +25,10 @@
             <div class="subtab" onclick="showWorkout(4)">Workout 4</div>
             <div class="subtab" onclick="showWorkout(5)">Workout 5</div>
         </div>
-        <div class="subtabs" id="heats-subtabs">
-            <div class="subtab" onclick="showHeat(1)">Workout 1</div>
-            <div class="subtab" onclick="showHeat(2)">Workout 2</div>
-            <div class="subtab" onclick="showHeat(3)">Workout 3</div>
-            <div class="subtab" onclick="showHeat(4)">Workout 4</div>
-            <div class="subtab" onclick="showHeat(5)">Workout 5</div>
-        </div>
-        <div class="tab-content" id="announcements-content">
-    <div id="announcement-details">
-        <ul id="announcement-list"></ul>
-    </div>
-</div>     
-
-<div class="tab-content" id="workouts-content">
+        <div class="tab-content" id="workouts-content">
             <div id="workout-details"></div>
         </div>
-        <div class="tab-content" id="heats-content">
-	    <div id="heat-details">
-		<table id="heat-table">
-		    <thead>
-			<tr>
-			    <th>Heat</th>
-			    <th>Description</th>
-			</tr>
-		    </thead>
-		    <tbody></tbody>
-		</table>
-	    </div>
-	</div>      
-	<div class="table-container active" id="men-container">
+        <div class="table-container active" id="men-container">
             <table id="men">
                 <thead>
                     <tr>
