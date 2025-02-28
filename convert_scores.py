@@ -7,8 +7,8 @@ def convert_scoresheet(input_file, output_file):
         reader = csv.DictReader(f)
         scores = []
         for row in reader:
-            # Determine category (we'll need to manually assign or infer from a separate list)
-            category = "unknown"  # You'll need to provide this information
+            # Get category and convert to lowercase
+            category = row['Category'].lower()
             
             # Clean up the data
             name = row['Vor- und Nachname'].strip()
@@ -31,4 +31,4 @@ def convert_scoresheet(input_file, output_file):
             writer.writerow(score)
 
 # Usage
-convert_scoresheet('scoresheet25_1.csv', 'leaderboard_25_1_temp.csv') 
+convert_scoresheet('scoresheet25_1.csv', 'leaderboard_25_1_temp.csv')
