@@ -13,17 +13,15 @@ body {
 }
 
 .header-area {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(300px, 2fr) minmax(150px, 1fr);
+    gap: 20px;
     align-items: center;
-    gap: 15px;
     margin-bottom: 20px;
 }
 
 .sponsor-column {
-    width: 100%;
     display: flex;
-    justify-content: center;
     align-items: center;
     gap: 10px;
 }
@@ -121,38 +119,95 @@ h1 {
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
-    .container {
-        padding: 5px;
+    /* Fixed sponsor positions */
+    .sponsor-column {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 0;
+        position: fixed;
+        left: 0;
+        right: 0;
+        background: white;
+        z-index: 100;
     }
 
-    .partner-logo {
-        height: 2.5em;  /* Smaller logos on mobile */
+    .sponsor-column:first-child {
+        top: 0;
+        border-bottom: 1px solid #eee;
     }
 
+    .sponsor-column:last-child {
+        bottom: 0;
+        border-top: 1px solid #eee;
+    }
+
+    /* Center the header content */
+    .header-area {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        margin-bottom: 10px;
+    }
+
+    .main-header {
+        margin-top: 70px;
+        margin-bottom: 70px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .header-center {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+    }
+
+    /* Center the logo and title */
     .logo {
         height: 3.5em;
+        margin-right: 15px;
     }
 
     h1 {
         font-size: 1.6em;
-        letter-spacing: 0.5px;
+        margin: 0;
+        text-align: center;
     }
 
-    .tab, .subtab {
-        padding: 8px 12px;
-        font-size: 14px;
-        margin: 2px;
-        min-width: 80px;  /* Ensure minimum width for tap target */
+    /* Make all tabs on one row */
+    .tabs {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100%;
+        flex-wrap: nowrap !important;
     }
 
+    .tab {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 80px !important;
+        margin: 5px !important;
+        display: inline-flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* Hide separator on mobile */
     .tab-separator {
-        width: 1px;
-        height: 25px;
-        margin: 0 5px;
+        display: none;
     }
 
-    .workout-cell {
-        grid-template-columns: 30px 1fr auto auto;  /* Adjust column widths */
+    /* Table container needs bottom padding */
+    .table-container {
+        padding-bottom: 70px;
+        margin-bottom: 20px;
     }
 }
 
@@ -217,14 +272,13 @@ h1 {
 }
 
 .table-container {
-    display: none;  /* Hide by default */
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    display: none;
     margin-bottom: 20px;
+    position: relative;  /* For positioning sticky header */
 }
 
 .table-container.active {
-    display: block;  /* Show only when active */
+    display: block;
 }
 
 .tab-content {
@@ -245,13 +299,35 @@ h1 {
 
 table {
     width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.9em;
-    border-collapse: collapse;
 }
 
+/* Header styles */
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+}
+
+th {
+    background-color: #ff0000;
+    color: white;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 8px;
+    border: 1px solid #ddd;
+    min-width: 80px;
+}
+
+/* Ensure table cells have consistent width */
 th, td {
-    min-width: 80px;  /* Reduced from 100px */
-    padding: 6px;
+    min-width: 80px;
+    padding: 8px;
+    white-space: nowrap;
+    border: 1px solid #ddd;
 }
 
 th {
@@ -343,25 +419,28 @@ tr:hover {
 
 /* Media Queries for Mobile Responsiveness */
 @media (max-width: 768px) {
-    .logo {
-        height: 5em;  /* Increased mobile logo size */
-        margin-right: 20px;
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
-    h1 {
-        font-size: 2em;  /* Slightly reduced from 2.4em */
-        letter-spacing: 2px;
-    }
-
-    .tab, .subtab {
-        padding: 10px 20px; /* Adjust padding for tabs on mobile */
-        font-size: 14px; /* Adjust font size for tabs on mobile */
+    table {
+        table-layout: auto;  /* Allow columns to size based on content */
     }
 
     th, td {
-        min-width: 80px; /* Further adjust width for mobile */
-        padding: 6px; /* Further adjust padding for mobile */
+        white-space: nowrap;
+        min-width: unset;  /* Remove fixed widths */
+        width: auto;  /* Let content determine width */
     }
+
+    /* Column widths for mobile */
+    th:nth-child(1), td:nth-child(1) { min-width: 120px; }  /* Name */
+    th:nth-child(2), td:nth-child(2) { min-width: 60px; }   /* Rank */
+    th:nth-child(3), td:nth-child(3) { min-width: 60px; }   /* Points */
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(5), td:nth-child(5),
+    th:nth-child(6), td:nth-child(6) { min-width: 100px; }  /* Workouts */
 }
 
 .subtabs {
@@ -501,91 +580,6 @@ table th .sort-icon {
     padding: 10px;  /* Reduced from 20px */
 }
 
-/* Make table scrollable horizontally on mobile */
-.table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;  /* Smooth scrolling on iOS */
-    margin-bottom: 20px;
-}
-
-/* Adjust workout cell layout for mobile */
-@media (max-width: 768px) {
-    .header-area {
-        grid-template-columns: 1fr;  /* Stack columns on mobile */
-        text-align: center;
-    }
-
-    .sponsor-column {
-        flex-direction: row;
-        justify-content: center;
-        gap: 10px;
-        padding: 5px;
-    }
-
-    .partner-logo {
-        height: 3em;
-    }
-
-    .sponsor-text {
-        font-size: 0.8em;
-        margin: 0;
-    }
-
-    .logo {
-        height: 4em;
-        margin-right: 10px;
-    }
-
-    h1 {
-        font-size: 1.8em;
-    }
-
-    .tab, .subtab {
-        padding: 8px 15px;
-        font-size: 14px;
-        margin: 3px;
-    }
-
-    .workout-cell {
-        min-height: 30px;
-        padding: 3px 6px;
-    }
-
-    .workout-rank {
-        font-size: 1em;
-    }
-
-    .workout-score {
-        font-size: 0.85em;
-    }
-
-    .workout-rx {
-        font-size: 0.6em;
-    }
-
-    .workout-tiebreak {
-        font-size: 0.75em;
-    }
-
-    th, td {
-        padding: 6px;
-        font-size: 0.9em;
-    }
-
-    #workout-details {
-        font-size: 1em;
-        padding: 10px;
-    }
-
-    /* Add touch-friendly tap targets */
-    .tab, .subtab, th {
-        min-height: 44px;  /* iOS minimum tap target size */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
 /* Add viewport-based font sizing for very small screens */
 @media (max-width: 360px) {
     h1 {
@@ -601,13 +595,6 @@ table th .sort-icon {
     .workout-cell {
         min-height: 25px;
     }
-}
-
-/* Improve table readability on mobile */
-table {
-    width: 100%;
-    font-size: 0.9em;
-    border-collapse: collapse;
 }
 
 /* Add momentum scrolling for iOS */
