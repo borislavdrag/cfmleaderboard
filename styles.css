@@ -9,13 +9,13 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
 }
 
 .header-area {
     display: grid;
-    grid-template-columns: minmax(150px, 1fr) minmax(600px, 2fr) minmax(150px, 1fr);
-    gap: 20px;
+    grid-template-columns: minmax(150px, 1fr) minmax(300px, 2fr) minmax(150px, 1fr);
+    gap: 10px;
     align-items: center;
     margin-bottom: 20px;
 }
@@ -186,9 +186,9 @@ h1 {
 }
 
 .table-container {
-    display: none;
     overflow-x: auto;
-    margin-bottom: 20px; /* Add some space between the tables */
+    -webkit-overflow-scrolling: touch;  /* Smooth scrolling on iOS */
+    margin-bottom: 20px;
 }
 
 .table-container.active {
@@ -213,6 +213,7 @@ h1 {
 
 table {
     width: 100%;
+    font-size: 0.9em;
     border-collapse: collapse;
 }
 
@@ -453,4 +454,133 @@ table th .sort-icon {
 .top-design,
 .bottom-design {
     display: none;
+}
+
+/* Update header area for mobile */
+.header-area {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(300px, 2fr) minmax(150px, 1fr);
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Adjust container padding for mobile */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;  /* Reduced from 20px */
+}
+
+/* Make table scrollable horizontally on mobile */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;  /* Smooth scrolling on iOS */
+    margin-bottom: 20px;
+}
+
+/* Adjust workout cell layout for mobile */
+@media (max-width: 768px) {
+    .header-area {
+        grid-template-columns: 1fr;  /* Stack columns on mobile */
+        text-align: center;
+    }
+
+    .sponsor-column {
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        padding: 5px;
+    }
+
+    .partner-logo {
+        height: 3em;
+    }
+
+    .sponsor-text {
+        font-size: 0.8em;
+        margin: 0;
+    }
+
+    .logo {
+        height: 4em;
+        margin-right: 10px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .tab, .subtab {
+        padding: 8px 15px;
+        font-size: 14px;
+        margin: 3px;
+    }
+
+    .workout-cell {
+        min-height: 30px;
+        padding: 3px 6px;
+    }
+
+    .workout-rank {
+        font-size: 1em;
+    }
+
+    .workout-score {
+        font-size: 0.85em;
+    }
+
+    .workout-rx {
+        font-size: 0.6em;
+    }
+
+    .workout-tiebreak {
+        font-size: 0.75em;
+    }
+
+    th, td {
+        padding: 6px;
+        font-size: 0.9em;
+    }
+
+    #workout-details {
+        font-size: 1em;
+        padding: 10px;
+    }
+
+    /* Add touch-friendly tap targets */
+    .tab, .subtab, th {
+        min-height: 44px;  /* iOS minimum tap target size */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Add viewport-based font sizing for very small screens */
+@media (max-width: 360px) {
+    h1 {
+        font-size: 1.5em;
+    }
+
+    .tab, .subtab {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .workout-cell {
+        min-height: 25px;
+    }
+}
+
+/* Improve table readability on mobile */
+table {
+    width: 100%;
+    font-size: 0.9em;
+    border-collapse: collapse;
+}
+
+/* Add momentum scrolling for iOS */
+* {
+    -webkit-overflow-scrolling: touch;
 }
