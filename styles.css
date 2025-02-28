@@ -237,6 +237,37 @@ h1 {
     .tab-content.active {
         padding-bottom: 100px !important;
     }
+
+    /* Add more horizontal padding to the container */
+    .container {
+        padding: 10px 15px !important;
+    }
+    
+    /* Adjust tab container width to prevent overflow */
+    .tabs {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 0 auto !important;
+        padding: 5px 0 !important;
+    }
+    
+    /* Adjust tab widths to prevent overflow */
+    .tab[onclick="showTab('men')"],
+    .tab[onclick="showTab('women')"] {
+        width: 42% !important;
+        margin: 5px 1% !important;
+    }
+    
+    .tab[onclick="showTab('workouts')"] {
+        width: 75% !important;
+        margin: 10px auto 5px auto !important;
+    }
+    
+    /* Make tabs more compact */
+    .tab {
+        padding: 10px 5px !important;
+        font-size: 15px !important;
+    }
 }
 
 .tab {
