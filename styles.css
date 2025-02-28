@@ -13,18 +13,27 @@ body {
 }
 
 .header-area {
-    display: grid;
-    grid-template-columns: minmax(150px, 1fr) minmax(300px, 2fr) minmax(150px, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 15px;
     margin-bottom: 20px;
 }
 
 .sponsor-column {
+    width: 100%;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    padding: 10px;
+    gap: 10px;
+}
+
+.sponsor-column:first-child {
+    order: 1;  /* Nocco on top */
+}
+
+.sponsor-column:last-child {
+    order: 3;  /* Second sponsor at bottom */
 }
 
 .sponsor-text {
@@ -43,10 +52,7 @@ body {
 }
 
 .main-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    order: 2;  /* Header in middle */
     width: 100%;
 }
 
@@ -60,9 +66,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+    gap: 5px;
     width: 100%;
+    padding: 0 10px;
 }
 
 /* Responsive adjustments */
@@ -92,36 +98,61 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px 0;  /* Added padding for more space */
+    flex-wrap: wrap;  /* Allow wrapping on very small screens */
+    gap: 10px;
+    padding: 10px 0;
 }
 
 /* Main logo and title styles */
 .logo {
-    height: 5em;  /* Reduced from 9em */
-    margin-right: 25px;
+    height: 4em;
+    margin: 0;  /* Remove margin, use gap instead */
 }
 
 h1 {
-    color: #333;
-    font-size: 2.2em;  /* Reduced from 2.8em */
+    font-size: 2em;
     margin: 0;
     text-transform: uppercase;
     font-weight: 800;
-    letter-spacing: 2px;  /* Slightly reduced from 3px */
-    line-height: 1;
-    white-space: nowrap;  /* Ensure text stays on one line */
+    letter-spacing: 1px;
+    line-height: 1.2;
+    text-align: center;
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
+    .container {
+        padding: 5px;
+    }
+
+    .partner-logo {
+        height: 2.5em;  /* Smaller logos on mobile */
+    }
+
     .logo {
-        height: 4em;
-        margin-right: 15px;
+        height: 3.5em;
     }
 
     h1 {
         font-size: 1.6em;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
+    }
+
+    .tab, .subtab {
+        padding: 8px 12px;
+        font-size: 14px;
+        margin: 2px;
+        min-width: 80px;  /* Ensure minimum width for tap target */
+    }
+
+    .tab-separator {
+        width: 1px;
+        height: 25px;
+        margin: 0 5px;
+    }
+
+    .workout-cell {
+        grid-template-columns: 30px 1fr auto auto;  /* Adjust column widths */
     }
 }
 
@@ -186,13 +217,14 @@ h1 {
 }
 
 .table-container {
+    display: none;  /* Hide by default */
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;  /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
     margin-bottom: 20px;
 }
 
 .table-container.active {
-    display: block;
+    display: block;  /* Show only when active */
 }
 
 .tab-content {
@@ -218,11 +250,8 @@ table {
 }
 
 th, td {
-    min-width: 100px; /* Adjust width for better mobile view */
-    white-space: nowrap;
-    border: 1px solid #ddd;
-    padding: 8px; /* Adjust padding for better mobile view */
-    text-align: left;
+    min-width: 80px;  /* Reduced from 100px */
+    padding: 6px;
 }
 
 th {
@@ -560,12 +589,13 @@ table th .sort-icon {
 /* Add viewport-based font sizing for very small screens */
 @media (max-width: 360px) {
     h1 {
-        font-size: 1.5em;
+        font-size: 1.4em;
     }
 
     .tab, .subtab {
-        padding: 6px 12px;
+        padding: 6px 10px;
         font-size: 12px;
+        min-width: 70px;
     }
 
     .workout-cell {
