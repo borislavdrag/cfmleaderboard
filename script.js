@@ -204,7 +204,7 @@ function processLeaderboardData(workouts) {
                     participant.overallRank = prevParticipant.overallRank;
                     sameRankCount++;
                 } else {
-                    currentRank = index + 1;
+                currentRank = index + 1;
                     participant.overallRank = currentRank;
                     currentPoints = participant.points;
                     currentRanks = participantRanks;
@@ -262,7 +262,7 @@ function renderTable(data, tableId) {
         
         const row = `
             <tr>
-                <td>${participant.name}</td>
+            <td>${participant.name}</td>
                 <td class="overall-rank">${participant.overallRank}</td>
                 <td class="overall-points">${participant.points}</td>
                 ${workoutCells}
@@ -290,8 +290,8 @@ window.showTab = function(tabId) {
     }
 };
 
-window.showWorkout = function(workoutNumber) {
-    const workoutDetails = document.getElementById('workout-details');
+    window.showWorkout = function(workoutNumber) {
+    	const workoutDetails = document.getElementById('workout-details');
     
     // Fetch the workout description from the corresponding file
     fetch(`25_${workoutNumber}.txt`)
@@ -333,11 +333,11 @@ window.sortTable = function(tableId, column) {
     const currentHeader = table.querySelector(`th[onclick="sortTable('${tableId}', '${column}')"]`);
     currentHeader.classList.add(`sorted-${currentSort.direction}`);
 
-    const tbody = table.querySelector('tbody');
+        const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
 
     // Sort the rows
-    rows.sort((a, b) => {
+        rows.sort((a, b) => {
         let valueA, valueB;
 
         switch(column) {
@@ -369,11 +369,11 @@ window.sortTable = function(tableId, column) {
 
         if (currentSort.direction === 'asc') {
             return valueA - valueB;
-        } else {
+            } else {
             return valueB - valueA;
-        }
-    });
+            }
+        });
 
     // Reinsert rows in new order
-    rows.forEach(row => tbody.appendChild(row));
+        rows.forEach(row => tbody.appendChild(row));
 };
