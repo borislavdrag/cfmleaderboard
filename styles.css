@@ -180,34 +180,62 @@ h1 {
         text-align: center;
     }
 
-    /* Make all tabs on one row */
+    /* Tab container */
     .tabs {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        width: 100% !important;
+        padding: 5px !important;
+    }
+    
+    /* Reorder tabs with flexbox order */
+    .tab[onclick="showTab('workouts')"] {
+        order: 2 !important; /* Make it appear second in order */
+        width: 80% !important; /* Make it wider but not too wide */
+        margin: 5px auto !important; /* Center it with auto margins */
+    }
+    
+    .tab[onclick="showTab('men')"] {
+        order: 1 !important; /* First in order */
+        width: 45% !important; /* Take up just under half width */
+        margin: 5px 2px !important;
+    }
+    
+    .tab[onclick="showTab('women')"] {
+        order: 1 !important; /* Also first in order, will appear next to men */
+        width: 45% !important;
+        margin: 5px 2px !important;
+    }
+    
+    /* Hide separator */
+    .tab-separator {
+        display: none !important;
+    }
+    
+    /* Make all tabs look consistent */
+    .tab {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        width: 100%;
-        flex-wrap: nowrap !important;
-    }
-
-    .tab {
-        flex: 0 0 auto !important;
-        width: auto !important;
-        min-width: 80px !important;
-        margin: 5px !important;
-        display: inline-flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-
-    /* Hide separator on mobile */
-    .tab-separator {
-        display: none;
+        padding: 10px 5px !important;
+        font-size: 16px !important;
     }
 
     /* Table container needs bottom padding */
     .table-container {
-        padding-bottom: 70px;
-        margin-bottom: 20px;
+        padding-bottom: 100px !important;
+        margin-bottom: 30px !important;
+    }
+    
+    /* Also add padding to workout details */
+    #workout-details {
+        padding-bottom: 100px !important;
+    }
+    
+    /* Add padding to tab content */
+    .tab-content.active {
+        padding-bottom: 100px !important;
     }
 }
 
