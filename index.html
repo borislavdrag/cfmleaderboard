@@ -21,6 +21,7 @@
                     </div>
                 </div>
                 <div class="tabs">
+                    <a href="https://forms.gle/8cjnJrz1GxrJEmGq7" target="_blank" class="score-entry-button">Enter Score</a>
                     <div class="tab" onclick="showTab('workouts')">Workouts</div>
                     <div class="tab-separator"></div>
                     <div class="tab active" onclick="showTab('men')">Men</div>
@@ -59,12 +60,12 @@
             <table id="women">
                 <thead>
                     <tr>
-                        <th onclick="sortTable('women', 0, 'asc')">Name</th>
-                        <th>Rank</th>
-                        <th>Points</th>
-                        <th>Workout 25.1</th>
-                        <th>Workout 25.2</th>
-                        <th>Workout 25.3</th>
+                        <th onclick="sortTable('women', 'name')">Name</th>
+                        <th onclick="sortTable('women', 'rank')">Rank</th>
+                        <th onclick="sortTable('women', 'points')">Points</th>
+                        <th onclick="sortTable('women', 'workout1')">Workout 25.1</th>
+                        <th onclick="sortTable('women', 'workout2')">Workout 25.2</th>
+                        <th onclick="sortTable('women', 'workout3')">Workout 25.3</th>
                     </tr>
                 </thead>
                 <tbody></tbody>

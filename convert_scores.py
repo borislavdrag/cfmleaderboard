@@ -31,4 +31,4 @@ def convert_scoresheet(input_file, output_file):
             writer.writerow(score)
 
 # Usage
-convert_scoresheet('scoresheet25_1.csv', 'leaderboard_25_1_temp.csv')
+convert_scoresheet('scoresheet25_1.csv', 'leaderboard_25_1.csv')

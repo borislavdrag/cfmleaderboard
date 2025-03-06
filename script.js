@@ -32,74 +32,119 @@ async function loadLeaderboards() {
 }
 
 function parseWorkoutCSV(csvText) {
-    return csvText
+    // First, collect all entries for each person
+    const entriesByName = new Map();
+    
+    csvText
         .split('\n')
         .slice(1) // Skip header
         .filter(row => row.trim())
-        .map(row => {
+        .forEach(row => {
             const [category, name, version, score, tiebreak] = row.split(',').map(cell => cell.trim());
-            return {
+            
+            // Create entry object
+            const entry = {
                 category: category.toLowerCase(),
                 name,
                 score: parseInt(score) || 0,
                 tiebreak: tiebreak || '',
                 rx: version.toLowerCase() === 'rx'
             };
+            
+            // If we already have entries for this name, add to array, otherwise create new array
+            if (entriesByName.has(name)) {
+                entriesByName.get(name).push(entry);
+            } else {
+                entriesByName.set(name, [entry]);
+            }
         });
+    
+    // Then, for each person, select their best entry
+    return Array.from(entriesByName.values()).map(entries => {
+        // Sort entries by:
+        // 1. RX over SC
+        // 2. Higher score
+        // 3. Better tiebreak (lower is better)
+        return entries.sort((a, b) => {
+            // RX always above SC
+            if (a.rx !== b.rx) return a.rx ? -1 : 1;
+            
+            // Higher score is better
+            if (a.score !== b.score) return b.score - a.score;
+            
+            // If scores are equal, use tiebreak (lower is better)
+            if (a.tiebreak && b.tiebreak) {
+                return a.tiebreak - b.tiebreak;
+            }
+            
+            // If only one has a tiebreak, they win
+            if (a.tiebreak) return -1;
+            if (b.tiebreak) return 1;
+            
+            // If no tiebreaks, they're equal
+            return 0;
+        })[0]; // Take the first (best) entry
+    });
 }
 
 function calculateWorkoutRanks(participants) {
     // First sort participants
-    const sortedParticipants = participants.sort((a, b) => {
+    const sortedParticipants = [...participants].sort((a, b) => {
         // RX always above SC
         if (a.rx !== b.rx) return a.rx ? -1 : 1;
         
         // Higher score is better
         if (a.score !== b.score) return b.score - a.score;
         
-        // If scores are equal, use tiebreak
-        return a.tiebreak.localeCompare(b.tiebreak);
+        // If scores are equal, use tiebreak (lower is better)
+        if (a.tiebreak && b.tiebreak) {
+            return a.tiebreak - b.tiebreak;
+        }
+        
+        // If only one has a tiebreak, they win
+        if (a.tiebreak) return -1;
+        if (b.tiebreak) return 1;
+        
+        // If no tiebreaks, they're equal
+        return 0;
     });
 
-    // Then assign ranks, handling ties
+    // Then assign ranks with 1224 ranking
     const ranks = {};
     let currentRank = 1;
-    let sameRankCount = 0;
+    let nextRank = 1;
+    let lastRx = null;
+    let lastScore = null;
+    let lastTiebreak = null;
 
     sortedParticipants.forEach((participant, index) => {
-        if (index === 0) {
-            ranks[participant.name] = {
-                rank: 1,
-                score: participant.score,
-                tiebreak: participant.tiebreak,
-                rx: participant.rx
-            };
-        } else {
-            const prevParticipant = sortedParticipants[index - 1];
-            const samePerfomance = 
-                participant.rx === prevParticipant.rx && 
-                participant.score === prevParticipant.score && 
-                participant.tiebreak === prevParticipant.tiebreak;
-
-            if (samePerfomance) {
-                ranks[participant.name] = {
-                    rank: ranks[prevParticipant.name].rank,
-                    score: participant.score,
-                    tiebreak: participant.tiebreak,
-                    rx: participant.rx
-                };
-                sameRankCount++;
-            } else {
-                currentRank = index + 1;
-                ranks[participant.name] = {
-                    rank: currentRank,
-                    score: participant.score,
-                    tiebreak: participant.tiebreak,
-                    rx: participant.rx
-                };
-                sameRankCount = 0;
-            }
+        // Check if this is a new performance level
+        const newPerformance = 
+            index === 0 || 
+            participant.rx !== lastRx || 
+            participant.score !== lastScore || 
+            participant.tiebreak !== lastTiebreak;
+            
+        if (newPerformance) {
+            // Start new rank group
+            currentRank = nextRank;
+            
+            // Update last values
+            lastRx = participant.rx;
+            lastScore = participant.score;
+            lastTiebreak = participant.tiebreak;
         }
+        
+        // Assign rank to this participant
+        ranks[participant.name] = {
+            rank: currentRank,
+            score: participant.score,
+            tiebreak: participant.tiebreak,
+            rx: participant.rx
+        };
+        
+        // Next rank will be current index + 1
+        nextRank = index + 2;
     });
 
     return ranks;
@@ -124,97 +169,49 @@ function processLeaderboardData(workouts) {
         const menParticipants = participants.filter(p => p.category === 'men');
         const womenParticipants = participants.filter(p => p.category === 'women');
         
-        // Last place is the number of participants in this workout + 1
-        const menLastPlace = menParticipants.length + 1;
-        const womenLastPlace = womenParticipants.length + 1;
-        
+        // Calculate ranks using our 1224 system
         const menRanks = calculateWorkoutRanks(menParticipants);
         const womenRanks = calculateWorkoutRanks(womenParticipants);
         
-        // Add workout data to participants
-        [
-            [menData, menRanks, menLastPlace],
-            [womenData, womenRanks, womenLastPlace]
-        ].forEach(([data, ranks, lastPlace]) => {
-            data.forEach((participant, name) => {
-                const result = ranks[name] || {
-                    rank: lastPlace,
+        // Apply workout data to each participant
+        menData.forEach((participant, name) => {
+            // If participant did this workout, use their rank, otherwise use a "did not participate" rank
+            if (name in menRanks) {
+                participant.workouts[workoutNum] = menRanks[name];
+            } else {
+                participant.workouts[workoutNum] = {
+                    rank: menParticipants.length + 1, // Last place + 1
                     score: 0,
                     tiebreak: '',
                     rx: false
                 };
-                participant.workouts[workoutNum] = result;
-                participant.points = Object.values(participant.workouts)
-                    .reduce((sum, workout) => sum + workout.rank, 0);
-            });
+            }
+        });
+        
+        womenData.forEach((participant, name) => {
+            if (name in womenRanks) {
+                participant.workouts[workoutNum] = womenRanks[name];
+            } else {
+                participant.workouts[workoutNum] = {
+                    rank: womenParticipants.length + 1, // Last place + 1
+                    score: 0,
+                    tiebreak: '',
+                    rx: false
+                };
+            }
         });
     });
     
-    // Calculate overall ranks
-    function calculateOverallRanks(data) {
-        const sortedParticipants = Array.from(data.values())
-            .sort((a, b) => {
-                // First compare points
-                if (a.points !== b.points) {
-                    return a.points - b.points;
-                }
-
-                // If points are equal, compare best ranks
-                const aRanks = Object.values(a.workouts)
-                    .map(w => w.rank)
-                    .sort((x, y) => x - y);
-                const bRanks = Object.values(b.workouts)
-                    .map(w => w.rank)
-                    .sort((x, y) => x - y);
-
-                // Compare each rank position until we find a difference
-                for (let i = 0; i < aRanks.length; i++) {
-                    if (aRanks[i] !== bRanks[i]) {
-                        return aRanks[i] - bRanks[i];
-                    }
-                }
-
-                // If all ranks are identical, they should tie
-                return 0;
-            });
-
-        // Assign ranks with ties
-        let currentRank = 1;
-        let currentPoints = null;
-        let currentRanks = null;
-        let sameRankCount = 0;
-
-        sortedParticipants.forEach((participant, index) => {
-            const participantRanks = Object.values(participant.workouts)
-                .map(w => w.rank)
-                .sort((x, y) => x - y);
-
-            if (index === 0) {
-                participant.overallRank = 1;
-                currentPoints = participant.points;
-                currentRanks = participantRanks;
-            } else {
-                const prevParticipant = sortedParticipants[index - 1];
-                
-                // Check if this participant should tie with the previous one
-                const sameTotalPoints = participant.points === currentPoints;
-                const sameRanks = participantRanks.every((rank, i) => rank === currentRanks[i]);
-
-                if (sameTotalPoints && sameRanks) {
-                    participant.overallRank = prevParticipant.overallRank;
-                    sameRankCount++;
-                } else {
-                currentRank = index + 1;
-                    participant.overallRank = currentRank;
-                    currentPoints = participant.points;
-                    currentRanks = participantRanks;
-                    sameRankCount = 0;
-                }
-            }
-        });
-
-        return sortedParticipants;
-    }
+    // Calculate points for each participant
+    menData.forEach(participant => {
+        participant.points = Object.values(participant.workouts)
+            .reduce((sum, workout) => sum + workout.rank, 0);
+    });
+    
+    womenData.forEach(participant => {
+        participant.points = Object.values(participant.workouts)
+            .reduce((sum, workout) => sum + workout.rank, 0);
+    });
     
     return {
         menData: calculateOverallRanks(menData),
@@ -222,8 +219,85 @@ function processLeaderboardData(workouts) {
     };
 }
 
+function calculateOverallRanks(data) {
+    const participants = Array.from(data.values());
+    
+    // Sort participants by points and tiebreakers
+    const sortedParticipants = [...participants].sort((a, b) => {
+        // First compare points
+        if (a.points !== b.points) {
+            return a.points - b.points;
+        }
+
+        // If points are equal, compare best ranks
+        const aRanks = Object.values(a.workouts)
+            .map(w => w.rank)
+            .sort((x, y) => x - y);
+        const bRanks = Object.values(b.workouts)
+            .map(w => w.rank)
+            .sort((x, y) => x - y);
+
+        // Compare each rank position until we find a difference
+        for (let i = 0; i < Math.min(aRanks.length, bRanks.length); i++) {
+            if (aRanks[i] !== bRanks[i]) {
+                return aRanks[i] - bRanks[i];
+            }
+        }
+
+        // If tied so far, the one with more workouts wins
+        if (aRanks.length !== bRanks.length) {
+            return bRanks.length - aRanks.length;
+        }
+
+        // If all ranks are identical, they should tie
+        return 0;
+    });
+
+    // Assign proper 1224 ranks
+    let currentRank = 1;
+    let prevPoints = null;
+    let prevRanks = null;
+    let sameRankCount = 0;
+    
+    for (let i = 0; i < sortedParticipants.length; i++) {
+        const participant = sortedParticipants[i];
+        const participantRanks = Object.values(participant.workouts)
+            .map(w => w.rank)
+            .sort((x, y) => x - y)
+            .join(','); // Convert to string for easy comparison
+        
+        if (i === 0) {
+            // First participant
+            participant.overallRank = 1;
+            prevPoints = participant.points;
+            prevRanks = participantRanks;
+            sameRankCount = 1;
+        } else {
+            const samePerformance = 
+                participant.points === prevPoints && 
+                participantRanks === prevRanks;
+                
+            if (samePerformance) {
+                // Same rank as previous
+                participant.overallRank = currentRank;
+                sameRankCount++;
+            } else {
+                // New rank = previous rank + number with that rank
+                currentRank += sameRankCount;
+                participant.overallRank = currentRank;
+                prevPoints = participant.points;
+                prevRanks = participantRanks;
+                sameRankCount = 1;
+            }
+        }
+    }
+
+    return sortedParticipants;
+}
+
 function renderTable(data, tableId) {
-    const tbody = document.querySelector(`#${tableId} tbody`);
+    const table = document.getElementById(tableId);
+    const tbody = table.querySelector('tbody');
     tbody.innerHTML = '';
     
     data.forEach(participant => {
@@ -233,15 +307,12 @@ function renderTable(data, tableId) {
                 return '<td></td>';
             }
             
-            // If no score (empty workout), show rank and dash
+            // If no score (empty workout), show empty cell
             if (!workout.score && !workout.tiebreak) {
                 return `
                     <td>
                         <div class="workout-cell">
-                            <span class="workout-rank">${workout.rank}</span>
-                            <span class="workout-score">
-                                <span class="workout-empty">—</span>
-                            </span>
+                            <span class="workout-empty">—</span>
                         </div>
                     </td>
                 `;
@@ -262,7 +333,7 @@ function renderTable(data, tableId) {
         
         const row = `
             <tr>
-            <td>${participant.name}</td>
+                <td>${participant.name}</td>
                 <td class="overall-rank">${participant.overallRank}</td>
                 <td class="overall-points">${participant.points}</td>
                 ${workoutCells}
