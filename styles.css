@@ -670,13 +670,13 @@ table th .sort-icon {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 50px;  /* Increased from 40px */
-    height: 50px;  /* Increased from 40px */
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background-color: #007bff;
     color: white;
     font-weight: bold;
-    font-size: 12px;  /* Increased from 10px */
+    font-size: 12px;
     text-align: center;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -691,19 +691,52 @@ table th .sort-icon {
     background-color: #0056b3;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     transform: scale(1.05);
+    color: white;
+    text-decoration: none;
 }
 
-/* Mobile adjustments for the button */
+/* Mobile adjustments */
 @media (max-width: 768px) {
-    .score-entry-button {
-        width: 45px;  /* Increased from 35px */
-        height: 45px;  /* Increased from 35px */
-        font-size: 11px;  /* Increased from 9px */
-        order: 1;
+    .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+        padding: 5px;
     }
-    
-    /* Remove the tab-button-container */
-    .tab-button-container {
-        display: none !important;
+
+    /* Create a container for workouts tab and button */
+    .workouts-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 10px;
+        order: 2;
+    }
+
+    /* Style the workouts tab */
+    .tab[onclick="showTab('workouts')] {
+        order: 1;
+        margin: 0 5px;
+    }
+
+    /* Style the score entry button */
+    .score-entry-button {
+        width: 45px;
+        height: 45px;
+        font-size: 11px;
+        order: 1;
+        margin: 0 5px;
+        color: white !important;
+        text-decoration: none !important;
+    }
+
+    /* Style men and women tabs */
+    .tab[onclick="showTab('men')"],
+    .tab[onclick="showTab('women')] {
+        order: 1;
+        width: 42%;
+        margin: 5px;
     }
 }
