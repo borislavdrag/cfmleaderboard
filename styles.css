@@ -180,7 +180,7 @@ h1 {
         text-align: center;
     }
 
-    /* Tab container */
+    /* Tab container with proper flex layout */
     .tabs {
         display: flex !important;
         flex-wrap: wrap !important;
@@ -192,85 +192,47 @@ h1 {
     /* Men and women tabs on first row */
     .tab[onclick="showTab('men')"],
     .tab[onclick="showTab('women')"] {
-        order: 1 !important; /* First row */
+        order: 1 !important;
         width: 42% !important;
         margin: 5px 1% !important;
     }
     
-    /* Enter Score button and Workouts tab on second row */
-    .score-entry-button {
-        order: 2 !important; /* Second row */
-        width: 45px;
-        height: 45px;
-        font-size: 11px;
-        margin: 10px 5px 5px 5px !important;
+    /* Workouts container on second row, full width */
+    .workouts-container {
+        order: 2 !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important; /* Stack vertically */
+        align-items: center !important;
+        margin: 5px 0 !important;
     }
     
+    /* Workouts tab style */
     .tab[onclick="showTab('workouts')"] {
-        order: 2 !important; /* Second row */
-        width: 60% !important; /* Reduced width to fit with button */
-        margin: 10px 5px 5px 5px !important;
+        width: 80% !important;
+        margin: 5px 0 !important;
+    }
+    
+    /* Score entry button style */
+    .score-entry-button {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 50px !important;
+        height: 50px !important;
+        border-radius: 50% !important;
+        background-color: #007bff !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 12px !important;
+        margin: 5px 0 !important;
+        text-decoration: none !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
     }
     
     /* Hide separator on mobile */
     .tab-separator {
         display: none !important;
-    }
-    
-    /* Make all tabs look consistent */
-    .tab {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        padding: 10px 5px !important;
-        font-size: 16px !important;
-    }
-
-    /* Table container needs bottom padding */
-    .table-container {
-        padding-bottom: 100px !important;
-        margin-bottom: 30px !important;
-    }
-    
-    /* Also add padding to workout details */
-    #workout-details {
-        padding-bottom: 100px !important;
-    }
-    
-    /* Add padding to tab content */
-    .tab-content.active {
-        padding-bottom: 100px !important;
-    }
-
-    /* Add more horizontal padding to the container */
-    .container {
-        padding: 10px 15px !important;
-    }
-    
-    /* Adjust tab container width to prevent overflow */
-    .tabs {
-        width: 95% !important;
-        max-width: 95% !important;
-        margin: 0 auto !important;
-        padding: 5px 0 !important;
-    }
-    
-    /* Adjust tab widths to prevent overflow */
-    .tab[onclick="showTab('men')"],
-    .tab[onclick="showTab('women')"] {
-        width: 42% !important;
-        margin: 5px 1% !important;
-    }
-    
-    .tab[onclick="showTab('workouts')"] {
-        width: 75% !important;
-        margin: 10px auto 5px auto !important;
-    }
-    
-    /* Make tabs more compact */
-    .tab {
-        padding: 10px 5px !important;
-        font-size: 15px !important;
     }
 }
 
