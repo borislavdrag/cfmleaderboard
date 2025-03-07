@@ -11,7 +11,7 @@ async function loadLeaderboards() {
                 const response = await fetch(`leaderboard_25_${i}.csv`);
                 if (response.ok) {
                     const text = await response.text();
-                    workouts[i] = parseWorkoutCSV(text);
+                    workouts[i] = parseWorkoutCSV(text, i);
                 }
             } catch (error) {
                 console.log(`Workout 25.${i} data not available yet`);
@@ -31,29 +31,68 @@ async function loadLeaderboards() {
     }
 }
 
-function parseWorkoutCSV(csvText) {
-    // First, collect all entries for each person
+// Helper functions for score handling
+function isTimeFormat(score) {
+    return typeof score === 'string' && /^\d{1,2}:\d{2}$/.test(score);
+}
+
+function parseTime(timeStr) {
+    if (!timeStr || !isTimeFormat(timeStr)) return 999999;
+    const [minutes, seconds] = timeStr.split(':').map(Number);
+    return minutes * 60 + seconds;
+}
+
+function compareScores(a, b, workoutNum) {
+    // RX always ranks higher than SC
+    if (a.rx !== b.rx) return a.rx ? -1 : 1;
+    
+    // For workout 2
+    if (workoutNum === 2) {
+        const aIsTime = isTimeFormat(a.scoreRaw);
+        const bIsTime = isTimeFormat(b.scoreRaw);
+        
+        // Time scores rank higher than rep scores
+        if (aIsTime !== bIsTime) return aIsTime ? -1 : 1;
+        
+        // Both are times - lower is better
+        if (aIsTime) return parseTime(a.scoreRaw) - parseTime(b.scoreRaw);
+        
+        // Both are reps - higher is better
+        if (a.score !== b.score) return b.score - a.score;
+        
+        // Equal reps - use tiebreak
+        return parseTime(a.tiebreak) - parseTime(b.tiebreak);
+    }
+    
+    // For workout 1 (and future workouts)
+    if (a.score !== b.score) return b.score - a.score;  // Higher is better
+    
+    // If scores are equal, use tiebreak if available
+    if (a.tiebreak && b.tiebreak) return parseTime(a.tiebreak) - parseTime(b.tiebreak);
+    if (a.tiebreak) return -1;
+    if (b.tiebreak) return 1;
+    return 0;
+}
+
+function parseWorkoutCSV(csvText, workoutNum) {
     const entriesByName = new Map();
     
-    csvText
-        .split('\n')
-        .slice(1) // Skip header
+    csvText.split('\n')
+        .slice(1)
         .filter(row => row.trim())
         .forEach(row => {
             const [category, name, version, score, tiebreak] = row.split(',').map(cell => cell.trim());
             
-            // Create entry object with parsed score
             const entry = {
                 category: category.toLowerCase(),
                 name,
                 scoreRaw: score,
-                score: parseScore(score),
+                score: isTimeFormat(score) ? parseTime(score) : parseInt(score) || 0,
                 tiebreak: tiebreak || '',
                 rx: version.toLowerCase() === 'rx',
-                isTime: isTimeFormat(score)
+                workoutNum
             };
             
-            // If we already have entries for this name, add to array, otherwise create new array
             if (entriesByName.has(name)) {
                 entriesByName.get(name).push(entry);
             } else {
@@ -61,140 +100,70 @@ function parseWorkoutCSV(csvText) {
             }
         });
     
-    // Then, for each person, select their best entry
-    return Array.from(entriesByName.values()).map(entries => {
-        // Sort entries by:
-        // 1. RX over SC
-        // 2. Higher score for reps, lower score for time
-        // 3. Better tiebreak (lower is better)
-        return entries.sort((a, b) => {
-            // RX always above SC
-            if (a.rx !== b.rx) return a.rx ? -1 : 1;
-            
-            // For time scores (lower is better)
-            if (a.isTime && b.isTime) {
-                if (a.score !== b.score) return a.score - b.score;
-            } 
-            // For rep scores (higher is better)
-            else if (!a.isTime && !b.isTime) {
-                if (a.score !== b.score) return b.score - a.score;
-            }
-            // Mixed types (shouldn't happen, but just in case)
-            else {
-                return a.isTime ? 1 : -1; // Prioritize non-time scores
-            }
-            
-            // If scores are equal, use tiebreak (lower is better)
-            if (a.tiebreak && b.tiebreak) {
-                const tiebreakA = parseFloat(a.tiebreak);
-                const tiebreakB = parseFloat(b.tiebreak);
-                return tiebreakA - tiebreakB;
-            }
-            
-            // If only one has a tiebreak, they win
-            if (a.tiebreak) return -1;
-            if (b.tiebreak) return 1;
-            
-            // If no tiebreaks, they're equal
-            return 0;
-        })[0]; // Take the first (best) entry
-    });
+    return Array.from(entriesByName.values())
+        .map(entries => entries.sort((a, b) => compareScores(a, b, workoutNum))[0]);
 }
 
-// Helper function to check if a score is in time format (MM:SS or M:SS)
-function isTimeFormat(score) {
-    return /^\d{1,2}:\d{2}$/.test(score);
-}
+function calculateWorkoutRanks(participants, workoutNum) {
+    // Sort participants using our comparison function
+    const sortedParticipants = [...participants].sort((a, b) => 
+        compareScores(a, b, workoutNum)
+    );
 
-// Helper function to parse scores
-function parseScore(score) {
-    if (isTimeFormat(score)) {
-        // Convert time format (MM:SS) to seconds for comparison
-        const [minutes, seconds] = score.split(':').map(Number);
-        return minutes * 60 + seconds;
-    } else {
-        // For rep counts, just convert to number
-        return parseInt(score) || 0;
-    }
-}
-
-function calculateWorkoutRanks(participants) {
-    // First sort participants
-    const sortedParticipants = [...participants].sort((a, b) => {
-        // RX always above SC
-        if (a.rx !== b.rx) return a.rx ? -1 : 1;
-        
-        // Check if scores are time-based (lower is better)
-        if (a.isTime && b.isTime) {
-            if (a.score !== b.score) return a.score - b.score;
-        } 
-        // For rep scores (higher is better)
-        else if (!a.isTime && !b.isTime) {
-            if (a.score !== b.score) return b.score - a.score;
-        }
-        // Mixed types (shouldn't happen, but just in case)
-        else {
-            return a.isTime ? 1 : -1; // Prioritize non-time scores
-        }
-        
-        // If scores are equal, use tiebreak (lower is better)
-        if (a.tiebreak && b.tiebreak) {
-            const tiebreakA = parseFloat(a.tiebreak);
-            const tiebreakB = parseFloat(b.tiebreak);
-            return tiebreakA - tiebreakB;
-        }
-        
-        // If only one has a tiebreak, they win
-        if (a.tiebreak) return -1;
-        if (b.tiebreak) return 1;
-        
-        // If no tiebreaks, they're equal
-        return 0;
-    });
-
-    // Then assign ranks with 1224 ranking
+    // Assign 1224 ranks
     const ranks = {};
     let currentRank = 1;
-    let nextRank = 1;
-    let lastRx = null;
-    let lastScore = null;
-    let lastTiebreak = null;
-    let lastIsTime = null;
+    let sameRankCount = 1;
+    let lastPerformance = null;
+    let nextAvailableRank = 1; // Track the next available rank
 
     sortedParticipants.forEach((participant, index) => {
-        // Check if this is a new performance level
-        const newPerformance = 
-            index === 0 || 
-            participant.rx !== lastRx || 
-            participant.score !== lastScore || 
-            participant.tiebreak !== lastTiebreak ||
-            participant.isTime !== lastIsTime;
-            
-        if (newPerformance) {
-            // Start new rank group
-            currentRank = nextRank;
-            
-            // Update last values
-            lastRx = participant.rx;
-            lastScore = participant.score;
-            lastTiebreak = participant.tiebreak;
-            lastIsTime = participant.isTime;
-        }
-        
-        // Assign rank to this participant
-        ranks[participant.name] = {
-            rank: currentRank,
+        const performance = {
+            rx: participant.rx,
             score: participant.score,
             scoreRaw: participant.scoreRaw,
-            tiebreak: participant.tiebreak,
-            rx: participant.rx,
-            isTime: participant.isTime
+            tiebreak: participant.tiebreak
         };
         
-        // Next rank will be current index + 1
-        nextRank = index + 2;
+        if (index === 0) {
+            // First participant gets rank 1
+            ranks[participant.name] = {
+                rank: currentRank,
+                score: participant.score,
+                scoreRaw: participant.scoreRaw,
+                tiebreak: participant.tiebreak,
+                rx: participant.rx,
+                workoutNum
+            };
+            lastPerformance = performance;
+        } else {
+            // Check if this performance matches the previous one
+            const sameAsPrevious = JSON.stringify(performance) === JSON.stringify(lastPerformance);
+            
+            if (sameAsPrevious) {
+                // Same performance = same rank
+                sameRankCount++;
+            } else {
+                // Different performance = new rank (skip ranks equal to number of tied athletes)
+                currentRank += sameRankCount;
+                sameRankCount = 1;
+                lastPerformance = performance;
+            }
+            
+            ranks[participant.name] = {
+                rank: currentRank,
+                score: participant.score,
+                scoreRaw: participant.scoreRaw,
+                tiebreak: participant.tiebreak,
+                rx: participant.rx,
+                workoutNum
+            };
+        }
+        nextAvailableRank = currentRank + sameRankCount; // Update next available rank
     });
 
+    // Store the next available rank in the ranks object
+    ranks.nextAvailableRank = nextAvailableRank;
     return ranks;
 }
 
@@ -214,60 +183,66 @@ function processLeaderboardData(workouts) {
     
     // Second pass: process workouts and calculate ranks
     Object.entries(workouts).forEach(([workoutNum, participants]) => {
+        const workoutNumber = parseInt(workoutNum);
         const menParticipants = participants.filter(p => p.category === 'men');
         const womenParticipants = participants.filter(p => p.category === 'women');
         
-        // Calculate ranks using our 1224 system
-        const menRanks = calculateWorkoutRanks(menParticipants);
-        const womenRanks = calculateWorkoutRanks(womenParticipants);
+        // Calculate ranks for this specific workout
+        const menRanks = calculateWorkoutRanks(menParticipants, workoutNumber);
+        const womenRanks = calculateWorkoutRanks(womenParticipants, workoutNumber);
         
         // Apply workout data to each participant
         menData.forEach((participant, name) => {
-            // If participant did this workout, use their rank, otherwise use a "did not participate" rank
             if (name in menRanks) {
-                participant.workouts[workoutNum] = menRanks[name];
+                participant.workouts[workoutNumber] = menRanks[name];
             } else {
-                participant.workouts[workoutNum] = {
-                    rank: menParticipants.length + 1, // Last place + 1
+                // Missing workout - assign next available rank
+                participant.workouts[workoutNumber] = {
+                    rank: menRanks.nextAvailableRank,
                     score: 0,
                     scoreRaw: '',
                     tiebreak: '',
                     rx: false,
-                    isTime: false
+                    workoutNum: workoutNumber
                 };
             }
         });
         
         womenData.forEach((participant, name) => {
             if (name in womenRanks) {
-                participant.workouts[workoutNum] = womenRanks[name];
+                participant.workouts[workoutNumber] = womenRanks[name];
             } else {
-                participant.workouts[workoutNum] = {
-                    rank: womenParticipants.length + 1, // Last place + 1
+                // Missing workout - assign next available rank
+                participant.workouts[workoutNumber] = {
+                    rank: womenRanks.nextAvailableRank,
                     score: 0,
                     scoreRaw: '',
                     tiebreak: '',
                     rx: false,
-                    isTime: false
+                    workoutNum: workoutNumber
                 };
             }
         });
     });
     
+    // Calculate points and convert to arrays
+    const menArray = Array.from(menData.values());
+    const womenArray = Array.from(womenData.values());
+    
     // Calculate points for each participant
-    menData.forEach(participant => {
+    menArray.forEach(participant => {
         participant.points = Object.values(participant.workouts)
             .reduce((sum, workout) => sum + workout.rank, 0);
     });
     
-    womenData.forEach(participant => {
+    womenArray.forEach(participant => {
         participant.points = Object.values(participant.workouts)
             .reduce((sum, workout) => sum + workout.rank, 0);
     });
     
     return {
-        menData: calculateOverallRanks(menData),
-        womenData: calculateOverallRanks(womenData)
+        menData: calculateOverallRanks(menArray),
+        womenData: calculateOverallRanks(womenArray)
     };
 }
 
@@ -359,15 +334,24 @@ function renderTable(data, tableId) {
                 return '<td></td>';
             }
             
-            // If no score (empty workout), show empty cell
-            if (!workout.score && !workout.tiebreak) {
+            // If no score (missing workout), show the rank they get for missing it
+            if (!workout.scoreRaw && !workout.tiebreak) {
                 return `
                     <td>
                         <div class="workout-cell">
-                            <span class="workout-empty">—</span>
+                            <span class="workout-rank">${workout.rank}</span>
+                            <span class="workout-score">—</span>
                         </div>
                     </td>
                 `;
+            }
+            
+            // For workout 2:
+            // - Show tiebreak if it exists
+            // - For rep scores without tiebreak, show default 12:00
+            let tiebreakToShow = workout.tiebreak;
+            if (workoutNum === 2 && !isTimeFormat(workout.scoreRaw) && !workout.tiebreak) {
+                tiebreakToShow = '12:00';
             }
             
             return `
@@ -376,7 +360,9 @@ function renderTable(data, tableId) {
                         <span class="workout-rank">${workout.rank}</span>
                         <span class="workout-rx">${workout.rx ? 'rx' : 'sc'}</span>
                         <span class="workout-score">
-                            ${workout.scoreRaw || workout.score}${workout.tiebreak ? `<span class="workout-tiebreak">(${workout.tiebreak})</span>` : ''}
+                            ${workout.scoreRaw}${tiebreakToShow ? 
+                                `<span class="workout-tiebreak">(${tiebreakToShow})</span>` : 
+                                ''}
                         </span>
                     </div>
                 </td>
