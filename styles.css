@@ -832,3 +832,61 @@ table th .sort-icon {
         padding: 8px 10px;
     }
 }
+
+/* Mobile optimizations for tabs and buttons */
+@media (max-width: 768px) {
+    /* Fix tab sizing and centering */
+    .tab {
+        padding: 8px 10px;
+        height: 36px;
+        font-size: 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* Style kids tab */
+    .tab[onclick="showTab('kids')"] {
+        order: 1;
+        width: 30%;
+        margin: 5px;
+    }
+    
+    /* Adjust men and women tabs width */
+    .tab[onclick="showTab('men')"],
+    .tab[onclick="showTab('women')"] {
+        width: 30%;
+    }
+    
+    /* Make workouts tab full width */
+    .tab[onclick="showTab('workouts')"] {
+        width: 100%;
+        margin-top: 10px;
+        height: 36px;
+    }
+    
+    /* Fix score entry button */
+    a.score-entry-button {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        font-size: 14px !important;
+        text-align: center !important;
+        line-height: 1.2 !important;
+        margin: 10px auto !important;
+    }
+    
+    /* Fix subtabs */
+    .subtab {
+        padding: 8px 10px;
+        height: 36px;
+        font-size: 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
