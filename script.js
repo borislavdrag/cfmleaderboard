@@ -23,6 +23,18 @@ async function loadLeaderboards() {
         renderTable(menData, 'men');
         renderTable(womenData, 'women');
         
+        // Load and display kids leaderboard
+        try {
+            const kidsResponse = await fetch('leaderboard_kids.csv');
+            if (kidsResponse.ok) {
+                const kidsText = await kidsResponse.text();
+                const kidsData = parseKidsCSV(kidsText);
+                renderKidsTable(kidsData, 'kids');
+            }
+        } catch (error) {
+            console.log('Kids leaderboard not available');
+        }
+        
         // Show initial views
         showWorkout(1);
         showTab('men');
@@ -371,7 +383,7 @@ function renderTable(data, tableId) {
         
         const row = `
             <tr>
-                <td>${participant.name}</td>
+            <td>${participant.name}</td>
                 <td class="overall-rank">${participant.overallRank}</td>
                 <td class="overall-points">${participant.points}</td>
                 ${workoutCells}
@@ -486,3 +498,46 @@ window.sortTable = function(tableId, column) {
     // Reinsert rows in new order
         rows.forEach(row => tbody.appendChild(row));
 };
+
+// Add function to parse kids CSV
+function parseKidsCSV(csvText) {
+    const kidsData = [];
+    
+    csvText.split('\n')
+        .slice(1)  // Skip header
+        .filter(row => row.trim())
+        .forEach(row => {
+            const [name, age, score, weight] = row.split(',').map(cell => cell.trim());
+            kidsData.push({
+                name,
+                age: age || '',
+                score,
+                weight
+            });
+        });
+    
+    return kidsData;
+}
+
+// Update function to render kids table
+function renderKidsTable(data, tableId) {
+    const table = document.getElementById(tableId);
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    data.forEach(kid => {
+        const row = `
+            <tr>
+                <td>${kid.name}</td>
+                <td>${kid.age}</td>
+                <td>
+                    <div class="kids-workout-cell">
+                        <span class="kids-workout-score">${kid.score}</span>
+                        <span class="workout-weight">(${kid.weight}kg)</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}

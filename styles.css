@@ -205,22 +205,23 @@ h1 {
         order: 1;
         margin: 0 5px;
         width: 80%;
+        text-align: center;
     }
     
     /* Style the score entry button */
     a.score-entry-button {
         display: block !important;
-        width: 60px !important;
-        height: 60px !important;
+        width: 70px !important;
+        height: 70px !important;
         line-height: 1.2 !important;
-        padding: 10px !important;
+        padding: 10px 5px !important;
         border-radius: 50% !important;
         background-color: #007bff !important;
         color: white !important;
         text-align: center !important;
-        font-weight: bold !important;
-        font-size: 14px !important;
         text-decoration: none !important;
+        font-weight: bold !important;
+        font-size: 0.8rem !important;
         margin: 10px auto !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
     }
@@ -231,11 +232,25 @@ h1 {
         order: 1;
         width: 42%;
         margin: 5px;
+        text-align: center;
     }
     
-    /* Hide separator on mobile */
-    .tab-separator {
-        display: none !important;
+    /* Improve tab styling for all tabs */
+    .tab {
+        padding: 10px 5px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 44px;
+    }
+    
+    /* Improve subtab styling */
+    .subtab {
+        padding: 8px 5px;
+        text-align: center;
+        min-width: 30px;
+        flex: 1;
     }
 }
 
@@ -686,22 +701,23 @@ table th .sort-icon {
         order: 1;
         margin: 0 5px;
         width: 80%;
+        text-align: center;
     }
 
     /* Style the score entry button */
     a.score-entry-button {
         display: block !important;
-        width: 60px !important;
-        height: 60px !important;
+        width: 70px !important;
+        height: 70px !important;
         line-height: 1.2 !important;
-        padding: 10px !important;
+        padding: 10px 5px !important;
         border-radius: 50% !important;
         background-color: #007bff !important;
         color: white !important;
         text-align: center !important;
-        font-weight: bold !important;
-        font-size: 14px !important;
         text-decoration: none !important;
+        font-weight: bold !important;
+        font-size: 0.8rem !important;
         margin: 10px auto !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
     }
@@ -712,5 +728,107 @@ table th .sort-icon {
         order: 1;
         width: 42%;
         margin: 5px;
+        text-align: center;
+    }
+}
+
+/* Add styles for kids table */
+.workout-weight {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+#kids-container {
+    display: none;
+}
+
+#kids-container.active {
+    display: block;
+}
+
+/* Improve kids table styling to match other tables */
+#kids {
+    max-width: 800px; /* Limit overall table width */
+    width: 100%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* Match header styling with other tables */
+#kids th {
+    background-color: #ff0000; /* Match exact red color used in other tables */
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding: 10px 15px; /* Reduced padding to match other tables */
+    border-bottom: 2px solid #dee2e6;
+    height: 20px; /* Fixed height to match other tables */
+}
+
+/* Match cell styling with other tables */
+#kids td {
+    padding: 10px 15px; /* Reduced padding to match other tables */
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Adjust column widths to be narrower */
+#kids th:first-child, #kids td:first-child {
+    width: 35%; /* Reduced from 40% */
+}
+
+#kids th:nth-child(2), #kids td:nth-child(2) {
+    width: 15%; /* Reduced from 20% */
+    text-align: center;
+}
+
+#kids th:last-child, #kids td:last-child {
+    width: 35%; /* Reduced from 40% */
+}
+
+/* Match the workout cell styling */
+.kids-workout-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kids-workout-score {
+    font-size: 1.3em;  /* Slightly larger */
+    font-weight: 500;
+}
+
+.workout-weight {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+/* Mobile optimizations for kids tab */
+@media (max-width: 768px) {
+    /* Style kids tab */
+    .tab[onclick="showTab('kids')"] {
+        order: 1;
+        width: 30%;
+        margin: 5px;
+        text-align: center;
+    }
+    
+    /* Adjust men and women tabs width */
+    .tab[onclick="showTab('men')"],
+    .tab[onclick="showTab('women')"] {
+        width: 30%;
+    }
+    
+    /* Make workouts tab full width */
+    .tab[onclick="showTab('workouts')"] {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    #kids th, #kids td {
+        padding: 8px 10px;
     }
 }
