@@ -58,8 +58,8 @@ function compareScores(a, b, workoutNum) {
     // RX always ranks higher than SC
     if (a.rx !== b.rx) return a.rx ? -1 : 1;
     
-    // For workout 2
-    if (workoutNum === 2) {
+    // For workouts 2 and 3 (both are time-priority)
+    if (workoutNum === 2 || workoutNum === 3) {
         const aIsTime = isTimeFormat(a.scoreRaw);
         const bIsTime = isTimeFormat(b.scoreRaw);
         
@@ -76,7 +76,7 @@ function compareScores(a, b, workoutNum) {
         return parseTime(a.tiebreak) - parseTime(b.tiebreak);
     }
     
-    // For workout 1 (and future workouts)
+    // For workout 1 (and any other future workouts)
     if (a.score !== b.score) return b.score - a.score;  // Higher is better
     
     // If scores are equal, use tiebreak if available
@@ -95,12 +95,18 @@ function parseWorkoutCSV(csvText, workoutNum) {
         .forEach(row => {
             const [category, name, version, score, tiebreak] = row.split(',').map(cell => cell.trim());
             
+            // For workout 3, use default tiebreak of 20:00 if none provided
+            let finalTiebreak = tiebreak || '';
+            if (workoutNum === 3 && !finalTiebreak && !isTimeFormat(score)) {
+                finalTiebreak = '20:00';
+            }
+            
             const entry = {
                 category: category.toLowerCase(),
                 name,
                 scoreRaw: score,
                 score: isTimeFormat(score) ? parseTime(score) : parseInt(score) || 0,
-                tiebreak: tiebreak || '',
+                tiebreak: finalTiebreak,
                 rx: version.toLowerCase() === 'rx',
                 workoutNum
             };
@@ -364,6 +370,20 @@ function renderTable(data, tableId) {
             let tiebreakToShow = workout.tiebreak;
             if (workoutNum === 2 && !isTimeFormat(workout.scoreRaw) && !workout.tiebreak) {
                 tiebreakToShow = '12:00';
+            }
+            
+            // For workout 3, add default tiebreak of 20:00 if not provided
+            if (workoutNum === 3 && !workout.tiebreak) {
+                if (!isTimeFormat(workout.scoreRaw)) {
+                    workout.tiebreak = '20:00';
+                }
+            }
+            
+            // For workout 2, keep existing logic for default tiebreak of 12:00
+            else if (workoutNum === 2 && !workout.tiebreak) {
+                if (!isTimeFormat(workout.scoreRaw)) {
+                    workout.tiebreak = '12:00';
+                }
             }
             
             return `
