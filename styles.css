@@ -356,6 +356,26 @@ tbody tr:nth-child(odd) {
   gap: 0.2rem;
 }
 
+.workout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.workout-score-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.workout-meta-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
 .workout-cell--empty {
   color: var(--muted);
 }
@@ -364,6 +384,18 @@ tbody tr:nth-child(odd) {
   font-weight: 600;
   font-size: 1rem;
 }
+
+.workout-flag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #b2b6c5;
+}
+
+.workout-flag--placeholder {
+  visibility: hidden;
+}
+
 
 .workout-meta {
   display: block;
@@ -402,6 +434,9 @@ tbody tr:nth-child(odd) {
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
 }
 
 .workout-card__badge {
@@ -426,8 +461,9 @@ tbody tr:nth-child(odd) {
 .workout-card__footer {
   display: flex;
   justify-content: space-between;
-  color: var(--muted);
+  color: var(--accent);
   font-size: 0.85rem;
+  margin-top: auto;
 }
 
 .score-drawer {

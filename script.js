@@ -75,6 +75,9 @@ const detectScoreMeta = (raw) => {
 const scoreTypePriority = { time: 0, number: 1, text: 2, none: 3 };
 
 const compareEntries = (a, b) => {
+  if (a.rxFlag !== b.rxFlag) {
+    return a.rxFlag ? -1 : 1;
+  }
   const priorityDiff = scoreTypePriority[a.scoreType] - scoreTypePriority[b.scoreType];
   if (priorityDiff !== 0) {
     return priorityDiff;
@@ -221,6 +224,7 @@ const buildEntriesFromRecords = (records) => {
       score: scoreRaw,
       tiebreak: tiebreakRaw,
       rx: rxLabel,
+      rxFlag: rxBoolean,
       scoreType: scoreMeta.type,
       scoreValue: scoreMeta.value,
       tiebreakValue: tiebreakMeta.type === 'time' ? tiebreakMeta.value : null,
@@ -304,6 +308,7 @@ const aggregateLeaderboards = (entries) => {
       score: entry.score || '—',
       tiebreak: entry.tiebreak || '',
       points: entry.points ?? null,
+      rxFlag: entry.rxFlag,
     };
     athlete.totalPoints += entry.points ?? 0;
   });
@@ -360,7 +365,7 @@ const app = createApp({
         workout: DEFAULT_WORKOUTS[0]?.id || '',
         score: '',
         tiebreak: '',
-        rx: false,
+        rx: true,
       },
       sort: {
         column: 'rank',
@@ -436,6 +441,7 @@ const app = createApp({
         }
         if (!ids.includes(state.scoreForm.workout)) {
           state.scoreForm.workout = ids[0];
+          state.scoreForm.rx = true;
         }
       },
       { immediate: true },

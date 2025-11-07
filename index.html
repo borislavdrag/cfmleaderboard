@@ -96,16 +96,33 @@
                 <td class="points-cell">{{ athlete.totalPoints || '—' }}</td>
                 <td v-for="workout in workouts" :key="`${athlete.name}-${workout.id}`">
                   <div v-if="athlete.workouts[workout.id]" class="workout-cell">
-                    <span class="workout-score">{{ athlete.workouts[workout.id].score }}</span>
-                    <span class="workout-meta">
-                      <template v-if="athlete.workouts[workout.id].tiebreak">
-                        TB {{ athlete.workouts[workout.id].tiebreak }}
-                      </template>
-                      <template v-else>&nbsp;</template>
-                    </span>
-                    <span class="workout-points">
-                      {{ athlete.workouts[workout.id].points ?? '—' }} pts
-                    </span>
+                    <div class="workout-header">
+                      <div class="workout-score-stack">
+                        <span class="workout-score">{{ athlete.workouts[workout.id].score }}</span>
+                        <span class="workout-points">
+                          {{ athlete.workouts[workout.id].points ?? '—' }} pts
+                        </span>
+                      </div>
+                      <div class="workout-meta-stack">
+                        <span class="workout-meta">
+                          <template v-if="athlete.workouts[workout.id].tiebreak">
+                            TB {{ athlete.workouts[workout.id].tiebreak }}
+                          </template>
+                          <template v-else>&nbsp;</template>
+                        </span>
+                        <span
+                          v-if="athlete.workouts[workout.id].rxFlag === false"
+                          class="workout-flag"
+                        >
+                          SC
+                        </span>
+                        <span
+                          v-else
+                          class="workout-flag workout-flag--placeholder"
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
                   </div>
                   <span v-else class="workout-cell workout-cell--empty">—</span>
                 </td>
@@ -213,7 +230,7 @@
             <select v-model="scoreForm.workout" required>
               <option disabled value="">Select workout</option>
               <option v-for="workout in workouts" :key="`form-workout-${workout.id}`" :value="workout.id">
-                {{ workout.title }}
+                {{ workout.id }}: {{ workout.title }}
               </option>
             </select>
           </label>

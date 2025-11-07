@@ -17,21 +17,21 @@
     "id": "WOD3",
     "title": "The Lung(es)",
     "focus": "For Time",
-    "description": "60/45 Cal Row\n60 Deadlifts @60/40\n30 Lunge Wall Balls @9/6\n30 Burpees Over Barbell*\n15 Thrusters*\n15 BMU*\n\n*Tiebreaker Time after Burpees and after Thrusters\n\nTime Cap: 15min",
+    "description": "60/45 Cal Row\n60 Deadlifts @60/40\n30 Lunge Wall Balls @9/6\n30 Burpees Over Barbell*\n15 Thrusters*\n15 BMU\n\n*Tiebreaker Time after Burpees and after Thrusters\n\nTime Cap: 15min",
     "status": "Announced"
   },
   {
     "id": "WOD4",
     "title": "Climb & Duck",
     "focus": "Semifinal",
-    "description": "-",
+    "description": " ",
     "status": "Not Announced"
   },
   {
     "id": "WOD5",
     "title": "Head, Shoulders, Knees, and Back",
     "focus": "Final",
-    "description": "-",
+    "description": " ",
     "status": "Not Announced"
   }
 ]
