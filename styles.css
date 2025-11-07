@@ -1,892 +1,632 @@
+:root {
+  --bg: #f7f8fb;
+  --bg-alt: #ffffff;
+  --panel: rgba(255, 255, 255, 0.95);
+  --panel-strong: rgba(255, 255, 255, 1);
+  --accent: #e53b3b;
+  --accent-soft: rgba(229, 59, 59, 0.15);
+  --text: #1f1f2b;
+  --muted: #717788;
+  --border: rgba(17, 26, 48, 0.1);
+  --success: #22a06b;
+  --warning: #c97e17;
+  --radius: 18px;
+  --shadow: 0 25px 45px rgba(38, 42, 59, 0.15);
+  font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: white;
-    margin: 0;
-    padding: 0;
-    position: relative;
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  color: var(--text);
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 10px;
+[v-cloak] {
+  opacity: 0;
 }
 
-.header-area {
-    display: grid;
-    grid-template-columns: minmax(150px, 1fr) minmax(300px, 2fr) minmax(150px, 1fr);
-    gap: 20px;
-    align-items: center;
-    margin-bottom: 20px;
+.page {
+  position: relative;
+  padding: 2rem clamp(1.5rem, 4vw, 3.5rem) 4rem;
+  overflow-x: hidden;
 }
 
-.sponsor-column {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(229, 59, 59, 0.15), transparent 45%),
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.6), transparent 35%);
+  pointer-events: none;
+  z-index: -1;
 }
 
-.sponsor-column:first-child {
-    order: 1;  /* Nocco on top */
+.hero {
+  backdrop-filter: blur(18px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow);
 }
 
-.sponsor-column:last-child {
-    order: 3;  /* Second sponsor at bottom */
+.hero__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-.sponsor-text {
-    font-size: 0.9em;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    white-space: nowrap;
+.hero__brand {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
 }
 
-.partner-logo {
-    height: 5em;  /* Much bigger logos */
-    object-fit: contain;
-    max-width: 100%;
+.hero__logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
 }
 
-.main-header {
-    order: 2;  /* Header in middle */
-    width: 100%;
+.hero__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin: 0 0 0.35rem;
 }
 
-.header {
-    padding: 20px 20px 10px 20px;
-    width: 100%;
-    text-align: center;
+.hero__subtitle {
+  margin-top: 0.35rem;
+  color: var(--muted);
 }
 
-.tabs {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
-    padding: 0 10px;
+.hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-/* Responsive adjustments */
-@media (max-width: 968px) {
-    .header-area {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .sponsor-column {
-        flex-direction: row;
-        justify-content: center;
-        gap: 20px;
-    }
-
-    .partner-logo {
-        height: 3.5em;
-    }
-
-    .sponsor-text {
-        margin-bottom: 0;
-        margin-right: 10px;
-    }
+.ghost-btn,
+.primary-btn {
+  border-radius: 999px;
+  padding: 0.9rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  color: var(--text);
 }
 
-.header-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;  /* Allow wrapping on very small screens */
-    gap: 10px;
-    padding: 10px 0;
+.ghost-btn {
+  background: rgba(229, 59, 59, 0.08);
+  border-color: rgba(229, 59, 59, 0.4);
+  color: var(--accent);
 }
 
-/* Main logo and title styles */
-.logo {
-    height: 4em;
-    margin: 0;  /* Remove margin, use gap instead */
+.ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-h1 {
-    font-size: 2em;
-    margin: 0;
-    text-transform: uppercase;
-    font-weight: 800;
-    letter-spacing: 1px;
-    line-height: 1.2;
-    text-align: center;
+.primary-btn {
+  background: linear-gradient(120deg, #f25151, #ff7b6f);
+  box-shadow: 0 12px 30px rgba(237, 77, 77, 0.3);
+  color: #fff;
 }
 
-/* Mobile adjustments */
-@media (max-width: 768px) {
-    /* Fixed sponsor positions */
-    .sponsor-column {
-        width: 100%;
-        justify-content: center;
-        padding: 10px 0;
-        position: fixed;
-        left: 0;
-        right: 0;
-        background: white;
-        z-index: 100;
-    }
-
-    .sponsor-column:first-child {
-        top: 0;
-        border-bottom: 1px solid #eee;
-    }
-
-    .sponsor-column:last-child {
-        bottom: 0;
-        border-top: 1px solid #eee;
-    }
-
-    /* Center the header content */
-    .header-area {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        margin-bottom: 10px;
-    }
-
-    .main-header {
-        margin-top: 70px;
-        margin-bottom: 70px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .header-center {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100%;
-        text-align: center;
-        padding: 15px 0;
-    }
-
-    /* Center the logo and title */
-    .logo {
-        height: 3.5em;
-        margin-right: 15px;
-    }
-
-    h1 {
-        font-size: 1.6em;
-        margin: 0;
-        text-align: center;
-    }
-
-    /* Tab container with proper flex layout */
-    .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 5px;
-        padding: 5px;
-    }
-    
-    /* Create a container for workouts tab and button */
-    .workouts-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 10px;
-        order: 2;
-    }
-    
-    /* Style the workouts tab */
-    .tab[onclick="showTab('workouts')"] {
-        order: 1;
-        margin: 0 5px;
-        width: 80%;
-        text-align: center;
-    }
-    
-    /* Style the score entry button */
-    a.score-entry-button {
-        display: block !important;
-        width: 70px !important;
-        height: 70px !important;
-        line-height: 1.2 !important;
-        padding: 10px 5px !important;
-        border-radius: 50% !important;
-        background-color: #007bff !important;
-        color: white !important;
-        text-align: center !important;
-        text-decoration: none !important;
-        font-weight: bold !important;
-        font-size: 0.8rem !important;
-        margin: 10px auto !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-    }
-    
-    /* Style men and women tabs */
-    .tab[onclick="showTab('men')"],
-    .tab[onclick="showTab('women')"] {
-        order: 1;
-        width: 42%;
-        margin: 5px;
-        text-align: center;
-    }
-    
-    /* Improve tab styling for all tabs */
-    .tab {
-        padding: 10px 5px;
-        text-align: center;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 44px;
-    }
-    
-    /* Improve subtab styling */
-    .subtab {
-        padding: 8px 5px;
-        text-align: center;
-        min-width: 30px;
-        flex: 1;
-    }
+.ghost-btn:hover:not(:disabled),
+.primary-btn:hover {
+  transform: translateY(-1px);
 }
 
-.tab {
-    padding: 15px 30px;
-    cursor: pointer;
-    background-color: #ff0000;
-    color: white;
-    margin: 5px;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-    font-weight: bold;
-    font-size: 18px;
-    display: inline-block;
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 2.5rem;
 }
 
-.tab-separator {
-    width: 2px;
-    height: 30px;
-    background-color: #ddd;
-    margin: 0 10px;
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
 }
 
-.tab:hover {
-    background-color: #cc0000;
+.status-card {
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 1.2rem 1.5rem;
 }
 
-.tab.active {
-    background-color: #cc0000;
+.status-card__label {
+  margin: 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
 }
 
-.subtabs {
-    display: none;
-    justify-content: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+.status-card__value {
+  margin: 0.6rem 0;
 }
 
-.subtabs.active {
-    display: flex;
+.status-card__body {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
-.subtab {
-    padding: 10px 20px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    margin: 5px; /* Adjust margin for better spacing on mobile */
-    border-radius: 5px;
-    transition: background-color 0.3s;
-    font-weight: bold;
-    font-size: 16px;
+.dashboard-card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  box-shadow: var(--shadow);
 }
 
-.subtab:hover {
-    background-color: #0056b3;
+.dashboard-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.subtab.active {
-    background-color: #0056b3;
-    color: #e0e0e0; /* Gray out the text when active */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin: 0;
 }
 
-.table-container {
-    display: none;
-    margin-bottom: 20px;
-    position: relative;  /* For positioning sticky header */
+.division-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.table-container.active {
-    display: block;
+.division-tabs__btn {
+  padding: 0.35rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s ease, border 0.2s ease;
 }
 
-.tab-content {
-    display: none;
-    margin-bottom: 20px;
+.division-tabs__btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
-.tab-content.active {
-    display: block;
+.workout-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
-#workout-details {
-    font-size: 1.2em; /* Slightly larger font size */
-    text-align: center; /* Center the workout details */
-    margin-top: 20px;
-    white-space: pre-line; /* Ensure newlines are rendered */
+.workout-tab {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workout-tab.active {
+  border-color: var(--accent);
+  box-shadow: 0 15px 35px rgba(255, 92, 92, 0.25);
+}
+
+.workout-tab__title {
+  font-weight: 600;
+  display: block;
+}
+
+.workout-tab__type {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: calc(var(--radius) - 6px);
+  border: 1px solid var(--border);
 }
 
 table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.9em;
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+  background: #ffffff;
+  border-radius: calc(var(--radius) - 6px);
+  overflow: hidden;
 }
 
-/* Header styles */
-thead {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: white;
+thead th {
+  text-align: left;
+  padding: 0.85rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  position: sticky;
+  top: 0;
+  background: #f0f2f7;
 }
 
-th {
-    background-color: #ff0000;
-    color: white;
-    text-transform: uppercase;
-    white-space: nowrap;
-    padding: 8px;
-    border: 1px solid #ddd;
-    min-width: 80px;
+.sortable {
+  cursor: pointer;
+  position: relative;
+  padding-right: 1.5rem;
+  user-select: none;
 }
 
-/* Ensure table cells have consistent width */
-th, td {
-    min-width: 80px;
-    padding: 8px;
-    white-space: nowrap;
-    border: 1px solid #ddd;
+.sortable::after {
+  content: '';
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid transparent;
+  transform: translateY(-50%);
+  opacity: 0.3;
 }
 
-th {
-    background-color: #ff0000;
-    color: white;
-    text-transform: uppercase;
-    cursor: pointer;
-    position: relative;
-    padding-right: 20px; /* Make room for the arrow */
+.sorted-asc::after {
+  border-top: 7px solid var(--text);
+  transform: translateY(-50%) rotate(180deg);
+  opacity: 0.7;
 }
 
-th::after {
-    content: '';
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+.sorted-desc::after {
+  border-top: 7px solid var(--text);
+  opacity: 0.7;
 }
 
-th.sorted-asc::after {
-    content: '▲';
-    font-size: 0.8em;
+tbody td {
+  padding: 1rem 0.85rem;
+  border-top: 1px solid var(--border);
 }
 
-th.sorted-desc::after {
-    content: '▼';
-    font-size: 0.8em;
+tbody tr:nth-child(even) {
+  background: #f9fafc;
 }
 
-th:hover {
-    background-color: #cc0000;
+tbody tr:nth-child(odd) {
+  background: #ffffff;
 }
 
-tr:nth-child(even) {
-    background-color: #f2f2f2;
+.athlete-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
-tr:hover {
-    background-color: #ddd;
+.athlete-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
+.athlete-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.rank-cell {
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.points-cell {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--accent);
+}
 .workout-cell {
-    display: grid;
-    grid-template-areas: 
-        "rank . . rx"
-        "rank . score score";
-    grid-template-columns: auto 1fr auto auto;
-    min-height: 35px;  /* Reduced from 45px */
-    position: relative;
-    padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
-.workout-rank {
-    grid-area: rank;
-    font-weight: 500;  /* Reduced from bold (700) to medium (500) */
-    color: #000;
-    font-size: 1.2em;  /* Reduced from 1.4em */
-    align-self: center;
-}
-
-.workout-rx {
-    grid-area: rx;
-    font-size: 0.65em;
-    text-transform: uppercase;
-    color: #aaa;
-    letter-spacing: 0.5px;
-    font-weight: bold;
-    margin-right: -4px;
+.workout-cell--empty {
+  color: var(--muted);
 }
 
 .workout-score {
-    grid-area: score;
-    color: #666;
-    font-size: 0.95em;
-    text-align: right;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
-.workout-tiebreak {
-    color: #999;
-    font-size: 0.85em;
-    margin-left: 6px;
-    display: inline-block;
+.workout-meta {
+  display: block;
+  min-height: 1.1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-/* Remove old event-related styles */
-.event-cell, .event-details, .event-extra {
-    display: none;
+.workout-points {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
 }
 
-/* Media Queries for Mobile Responsiveness */
-@media (max-width: 768px) {
-    .table-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    table {
-        table-layout: auto;  /* Allow columns to size based on content */
-    }
-
-    th, td {
-        white-space: nowrap;
-        min-width: unset;  /* Remove fixed widths */
-        width: auto;  /* Let content determine width */
-    }
-
-    /* Column widths for mobile */
-    th:nth-child(1), td:nth-child(1) { min-width: 120px; }  /* Name */
-    th:nth-child(2), td:nth-child(2) { min-width: 60px; }   /* Rank */
-    th:nth-child(3), td:nth-child(3) { min-width: 60px; }   /* Points */
-    th:nth-child(4), td:nth-child(4),
-    th:nth-child(5), td:nth-child(5),
-    th:nth-child(6), td:nth-child(6) { min-width: 100px; }  /* Workouts */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  border-radius: calc(var(--radius) - 6px);
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.8);
 }
 
-.subtabs {
-    display: none;
-    justify-content: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+.workout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
 }
 
-.subtabs.active {
-    display: flex;
+.workout-card {
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.subtab {
-    padding: 10px 20px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    margin: 5px; /* Adjust margin for better spacing on mobile */
-    border-radius: 5px;
-    transition: background-color 0.3s;
-    font-weight: bold;
-    font-size: 16px;
+.workout-card__badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.2em;
 }
 
-.subtab:hover {
-    background-color: #0056b3;
+.workout-card__focus {
+  color: var(--muted);
+  margin-top: 0;
 }
 
-.subtab.active {
-    background-color: #0056b3;
-    color: #e0e0e0; /* Gray out the text when active */
+.workout-card__desc {
+  color: var(--muted);
+  line-height: 1.5;
 }
 
-#heat-details {
-    overflow-x: auto; /* Make the table scrollable horizontally */
-    margin-top: 20px;
+.workout-card__footer {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
-#heat-table {
-    display: none; /* Initially hide the table */
+.score-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(420px, 100%);
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid rgba(229, 59, 59, 0.2);
+  box-shadow: -25px 0 45px rgba(38, 42, 59, 0.25);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: transform 0.28s ease;
+}
+
+.drawer-enter-from,
+.drawer-leave-to {
+  transform: translateX(100%);
+}
+
+.score-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.close-btn {
+  background: rgba(229, 59, 59, 0.08);
+  border: 1px solid rgba(229, 59, 59, 0.3);
+  color: var(--accent);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.score-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+
+.score-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.score-form input,
+.score-form select,
+.score-form textarea {
+  border-radius: 12px;
+  border: 1px solid rgba(229, 59, 59, 0.2);
+  background: rgba(229, 59, 59, 0.04);
+  color: var(--text);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+}
+
+.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.checkbox input {
+  width: auto;
+}
+
+.form-feedback {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.form-feedback.sending {
+  color: var(--warning);
+}
+
+.form-feedback.success {
+  color: var(--success);
+}
+
+.form-feedback.error {
+  color: var(--accent);
+}
+
+.admin-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9;
+}
+
+.admin-panel {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  width: min(420px, 90vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid rgba(229, 59, 59, 0.2);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(38, 42, 59, 0.25);
+  z-index: 10;
+}
+
+.admin-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.admin-panel__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-panel-enter-active,
+.admin-panel-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.admin-panel-enter-from,
+.admin-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+code {
+  font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+}
+
+@media (max-width: 900px) {
+  .hero__brand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero__actions {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px; /* Add some space between the table and other content */
-}
-
-#heat-table th, #heat-table td {
-    min-width: 100px; /* Adjust width for better mobile view */
-    white-space: nowrap;
-    border: 1px solid #ddd;
-    padding: 8px; /* Adjust padding for better mobile view */
-    text-align: left;
-}
-
-#heat-table th {
-    background-color: #ff0000;
-    color: white;
-    text-transform: uppercase;
-    cursor: pointer;
-    position: relative;
-}
-
-#heat-table th:hover {
-    background-color: #cc0000;
-}
-
-#heat-table tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-#heat-table tr:hover {
-    background-color: #ddd;
-}
-
-#announcement-details {
-    margin-top: 20px;
-}
-
-#announcement-list {
-    list-style-type: none; /* Remove bullet points */
-    padding: 0;
-}
-
-#announcement-list li {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
-
-#announcement-list li strong {
-    color: #ff0000; /* Highlight timestamp */
-}
-
-table th {
-    position: relative;
-    white-space: nowrap;
-}
-
-table th .sort-icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-}
-
-.overall-rank, .overall-points {
-    font-weight: bold;
-    text-align: center;
-}
-
-.workout-empty {
-    color: #ccc;
-    font-size: 1.2em;
-    font-weight: 500;
-}
-
-/* Remove the design elements */
-.top-design,
-.bottom-design {
-    display: none;
-}
-
-/* Update header area for mobile */
-.header-area {
-    display: grid;
-    grid-template-columns: minmax(150px, 1fr) minmax(300px, 2fr) minmax(150px, 1fr);
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-/* Adjust container padding for mobile */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 10px;  /* Reduced from 20px */
-}
-
-/* Add viewport-based font sizing for very small screens */
-@media (max-width: 360px) {
-    h1 {
-        font-size: 1.4em;
-    }
-
-    .tab, .subtab {
-        padding: 6px 10px;
-        font-size: 12px;
-        min-width: 70px;
-    }
-
-    .workout-cell {
-        min-height: 25px;
-    }
-}
-
-/* Add momentum scrolling for iOS */
-* {
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Update the score entry button to be inline with tabs */
-.score-entry-button {
-    display: inline-flex;
     justify-content: center;
-    align-items: center;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    font-weight: bold;
-    font-size: 12px;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    line-height: 1.2;
-    margin: 5px;
-    vertical-align: middle;
+  }
+
+  .table-wrapper {
+    margin: 0 -1rem;
+  }
 }
 
-.score-entry-button:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    transform: scale(1.05);
-    color: white;
-    text-decoration: none;
-}
+@media (max-width: 600px) {
+  .page {
+    padding: 1.5rem 1rem 3rem;
+  }
 
-/* Mobile adjustments */
-@media (max-width: 768px) {
-    .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 5px;
-        padding: 5px;
-    }
+  .hero {
+    padding: 1.5rem;
+  }
 
-    /* Create a container for workouts tab and button */
-    .workouts-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 10px;
-        order: 2;
-    }
-
-    /* Style the workouts tab */
-    .tab[onclick="showTab('workouts')"] {
-        order: 1;
-        margin: 0 5px;
-        width: 80%;
-        text-align: center;
-    }
-
-    /* Style the score entry button */
-    a.score-entry-button {
-        display: block !important;
-        width: 70px !important;
-        height: 70px !important;
-        line-height: 1.2 !important;
-        padding: 10px 5px !important;
-        border-radius: 50% !important;
-        background-color: #007bff !important;
-        color: white !important;
-        text-align: center !important;
-        text-decoration: none !important;
-        font-weight: bold !important;
-        font-size: 0.8rem !important;
-        margin: 10px auto !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-    }
-
-    /* Style men and women tabs */
-    .tab[onclick="showTab('men')"],
-    .tab[onclick="showTab('women')"] {
-        order: 1;
-        width: 42%;
-        margin: 5px;
-        text-align: center;
-    }
-}
-
-/* Add styles for kids table */
-.workout-weight {
-    color: #888;
-    font-size: 0.9em;
-    margin-left: 10px;
-}
-
-#kids-container {
-    display: none;
-}
-
-#kids-container.active {
-    display: block;
-}
-
-/* Improve kids table styling to match other tables */
-#kids {
-    max-width: 800px; /* Limit overall table width */
+  .score-drawer {
     width: 100%;
-    margin: 0 auto;
-    border-collapse: collapse;
-    border-spacing: 0;
+  }
+}
+.sync-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  background: rgba(229, 59, 59, 0.08);
+  border: 1px solid var(--border);
 }
 
-/* Match header styling with other tables */
-#kids th {
-    background-color: #ff0000; /* Match exact red color used in other tables */
-    color: white;
-    font-weight: bold;
-    text-align: left;
-    padding: 10px 15px; /* Reduced padding to match other tables */
-    border-bottom: 2px solid #dee2e6;
-    height: 20px; /* Fixed height to match other tables */
+.sync-chip span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
 }
 
-/* Match cell styling with other tables */
-#kids td {
-    padding: 10px 15px; /* Reduced padding to match other tables */
-    border-top: 1px solid #dee2e6;
-    border-bottom: 1px solid #dee2e6;
-}
-
-/* Adjust column widths to be narrower */
-#kids th:first-child, #kids td:first-child {
-    width: 35%; /* Reduced from 40% */
-}
-
-#kids th:nth-child(2), #kids td:nth-child(2) {
-    width: 15%; /* Reduced from 20% */
-    text-align: center;
-}
-
-#kids th:last-child, #kids td:last-child {
-    width: 35%; /* Reduced from 40% */
-}
-
-/* Match the workout cell styling */
-.kids-workout-cell {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.kids-workout-score {
-    font-size: 1.3em;  /* Slightly larger */
-    font-weight: 500;
-}
-
-.workout-weight {
-    color: #888;
-    font-size: 0.9em;
-    margin-left: 10px;
-}
-
-/* Mobile optimizations for kids tab */
-@media (max-width: 768px) {
-    /* Style kids tab */
-    .tab[onclick="showTab('kids')"] {
-        order: 1;
-        width: 30%;
-        margin: 5px;
-        text-align: center;
-    }
-    
-    /* Adjust men and women tabs width */
-    .tab[onclick="showTab('men')"],
-    .tab[onclick="showTab('women')"] {
-        width: 30%;
-    }
-    
-    /* Make workouts tab full width */
-    .tab[onclick="showTab('workouts')"] {
-        width: 100%;
-        margin-top: 10px;
-    }
-    
-    #kids th, #kids td {
-        padding: 8px 10px;
-    }
-}
-
-/* Mobile optimizations for tabs and buttons */
-@media (max-width: 768px) {
-    /* Fix tab sizing and centering */
-    .tab {
-        padding: 8px 10px;
-        height: 36px;
-        font-size: 14px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    /* Style kids tab */
-    .tab[onclick="showTab('kids')"] {
-        order: 1;
-        width: 30%;
-        margin: 5px;
-    }
-    
-    /* Adjust men and women tabs width */
-    .tab[onclick="showTab('men')"],
-    .tab[onclick="showTab('women')"] {
-        width: 30%;
-    }
-    
-    /* Make workouts tab full width */
-    .tab[onclick="showTab('workouts')"] {
-        width: 100%;
-        margin-top: 10px;
-        height: 36px;
-    }
-    
-    /* Fix score entry button */
-    a.score-entry-button {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 60px !important;
-        height: 60px !important;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        font-size: 14px !important;
-        text-align: center !important;
-        line-height: 1.2 !important;
-        margin: 10px auto !important;
-    }
-    
-    /* Fix subtabs */
-    .subtab {
-        padding: 8px 10px;
-        height: 36px;
-        font-size: 14px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+.sync-chip strong {
+  font-size: 1rem;
+  color: var(--accent);
 }

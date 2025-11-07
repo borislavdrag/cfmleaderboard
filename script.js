@@ -1,563 +1,634 @@
-document.addEventListener('DOMContentLoaded', function() {
-    loadLeaderboards();
-});
+const {
+  createApp,
+  reactive,
+  computed,
+  onMounted,
+  watch,
+  toRefs,
+} = window.Vue;
 
-async function loadLeaderboards() {
-    try {
-        // Load all available workout data
-        const workouts = {};
-        for (let i = 1; i <= 3; i++) {
-            try {
-                const response = await fetch(`leaderboard_25_${i}.csv`);
-                if (response.ok) {
-                    const text = await response.text();
-                    workouts[i] = parseWorkoutCSV(text, i);
-                }
-            } catch (error) {
-                console.log(`Workout 25.${i} data not available yet`);
-            }
-        }
+const WORKOUTS_PATH = 'workouts.json';
+const POINTS_BASE = 100;
+const POINTS_STEP = 5;
 
-        // Process and display the data
-        const { menData, womenData } = processLeaderboardData(workouts);
-        renderTable(menData, 'men');
-        renderTable(womenData, 'women');
-        
-        // Load and display kids leaderboard
-        try {
-            const kidsResponse = await fetch('leaderboard_kids.csv');
-            if (kidsResponse.ok) {
-                const kidsText = await kidsResponse.text();
-                const kidsData = parseKidsCSV(kidsText);
-                renderKidsTable(kidsData, 'kids');
-            }
-        } catch (error) {
-            console.log('Kids leaderboard not available');
-        }
-        
-        // Show initial views
-        showWorkout(1);
-        showTab('men');
-    } catch (error) {
-        console.error('Error loading data:', error);
+const DIVISIONS = [
+  { value: 'men', label: 'Men' },
+  { value: 'women', label: 'Women' },
+  { value: 'masters', label: 'Masters' },
+];
+
+const DEFAULT_WORKOUTS = [
+  { id: 'WOD1', title: 'WOD 1', focus: 'For time', description: 'Update workouts.json to change this description.', status: 'Announced' },
+  { id: 'WOD2', title: 'WOD 2', focus: 'Max reps', description: 'Update workouts.json to change this description.', status: 'Announced' },
+  { id: 'WOD3', title: 'WOD 3', focus: 'Skill ladder', description: 'Update workouts.json to change this description.', status: 'Announced' },
+  { id: 'WOD4', title: 'WOD 4', focus: 'Heavy day', description: 'Update workouts.json to change this description.', status: 'Announced' },
+  { id: 'WOD5', title: 'WOD 5', focus: 'Finale', description: 'Update workouts.json to change this description.', status: 'Announced' },
+].map((workout, index) => normalizeWorkoutDefinition(workout, index));
+
+const TIME_REGEX = /^\d{1,2}:\d{2}$/;
+
+const normalizeKey = (value = '') => value.toString().trim().toLowerCase();
+
+function normalizeWorkoutDefinition(workout, index = 0) {
+  const fallbackId = `WOD${index + 1}`;
+  const id = (workout?.id || fallbackId).toString().trim().toUpperCase();
+  return {
+    id,
+    title: workout?.title || id,
+    focus: workout?.focus || 'Competition workout',
+    description: workout?.description || 'Update workouts.json to change this description.',
+    status: workout?.status || 'Scheduled',
+  };
+}
+
+const divisionSummaryLabel = DIVISIONS.map((division) => division.label).join(' · ');
+
+const sanitizeNumber = (value = '') => {
+  const numeric = Number(value.toString().replace(',', '.'));
+  return Number.isNaN(numeric) ? null : numeric;
+};
+
+const parseTime = (timeStr = '') => {
+  if (!TIME_REGEX.test(timeStr)) return Number.POSITIVE_INFINITY;
+  const [minutes, seconds] = timeStr.split(':').map(Number);
+  return minutes * 60 + seconds;
+};
+
+const detectScoreMeta = (raw) => {
+  const cleaned = (raw ?? '').toString().trim();
+  if (!cleaned) {
+    return { type: 'none', value: null };
+  }
+
+  if (TIME_REGEX.test(cleaned)) {
+    return { type: 'time', value: parseTime(cleaned) };
+  }
+
+  const numeric = sanitizeNumber(cleaned);
+  if (numeric !== null) {
+    return { type: 'number', value: numeric };
+  }
+
+  return { type: 'text', value: cleaned };
+};
+
+const scoreTypePriority = { time: 0, number: 1, text: 2, none: 3 };
+
+const compareEntries = (a, b) => {
+  const priorityDiff = scoreTypePriority[a.scoreType] - scoreTypePriority[b.scoreType];
+  if (priorityDiff !== 0) {
+    return priorityDiff;
+  }
+
+  if (a.scoreType === 'time' && b.scoreType === 'time') {
+    return a.scoreValue - b.scoreValue;
+  }
+
+  if (a.scoreType === 'number' && b.scoreType === 'number') {
+    if (a.scoreValue !== b.scoreValue) {
+      return b.scoreValue - a.scoreValue;
     }
-}
+  }
 
-// Helper functions for score handling
-function isTimeFormat(score) {
-    return typeof score === 'string' && /^\d{1,2}:\d{2}$/.test(score);
-}
+  const tieA = a.tiebreakValue ?? Number.POSITIVE_INFINITY;
+  const tieB = b.tiebreakValue ?? Number.POSITIVE_INFINITY;
+  if (tieA !== tieB) {
+    return tieA - tieB;
+  }
 
-function parseTime(timeStr) {
-    if (!timeStr || !isTimeFormat(timeStr)) return 999999;
-    const [minutes, seconds] = timeStr.split(':').map(Number);
-    return minutes * 60 + seconds;
-}
+  return 0;
+};
 
-function compareScores(a, b, workoutNum) {
-    // RX always ranks higher than SC
-    if (a.rx !== b.rx) return a.rx ? -1 : 1;
-    
-    // For workouts 2 and 3 (both are time-priority)
-    if (workoutNum === 2 || workoutNum === 3) {
-        const aIsTime = isTimeFormat(a.scoreRaw);
-        const bIsTime = isTimeFormat(b.scoreRaw);
-        
-        // Time scores rank higher than rep scores
-        if (aIsTime !== bIsTime) return aIsTime ? -1 : 1;
-        
-        // Both are times - lower is better
-        if (aIsTime) return parseTime(a.scoreRaw) - parseTime(b.scoreRaw);
-        
-        // Both are reps - higher is better
-        if (a.score !== b.score) return b.score - a.score;
-        
-        // Equal reps - use tiebreak
-        return parseTime(a.tiebreak) - parseTime(b.tiebreak);
+const calculatePoints = (rankIndex) => Math.max(0, POINTS_BASE - POINTS_STEP * rankIndex);
+
+const tryParseJson = (payload) => {
+  try {
+    return JSON.parse(payload);
+  } catch (_) {
+    return null;
+  }
+};
+
+const parseCsv = (text) => {
+  const rows = [];
+  let current = '';
+  let inQuotes = false;
+  const pushCell = (row) => {
+    row.push(current.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+    current = '';
+  };
+  const pushRow = (row) => {
+    if (row.length) {
+      rows.push(row);
     }
-    
-    // For workout 1 (and any other future workouts)
-    if (a.score !== b.score) return b.score - a.score;  // Higher is better
-    
-    // If scores are equal, use tiebreak if available
-    if (a.tiebreak && b.tiebreak) return parseTime(a.tiebreak) - parseTime(b.tiebreak);
-    if (a.tiebreak) return -1;
-    if (b.tiebreak) return 1;
-    return 0;
-}
+  };
 
-function parseWorkoutCSV(csvText, workoutNum) {
-    const entriesByName = new Map();
-    
-    csvText.split('\n')
-        .slice(1)
-        .filter(row => row.trim())
-        .forEach(row => {
-            const [category, name, version, score, tiebreak] = row.split(',').map(cell => cell.trim());
-            
-            // For workout 3, use default tiebreak of 20:00 if none provided
-            let finalTiebreak = tiebreak || '';
-            if (workoutNum === 3 && !finalTiebreak && !isTimeFormat(score)) {
-                finalTiebreak = '20:00';
-            }
-            
-            const entry = {
-                category: category.toLowerCase(),
-                name,
-                scoreRaw: score,
-                score: isTimeFormat(score) ? parseTime(score) : parseInt(score) || 0,
-                tiebreak: finalTiebreak,
-                rx: version.toLowerCase() === 'rx',
-                workoutNum
-            };
-            
-            if (entriesByName.has(name)) {
-                entriesByName.get(name).push(entry);
-            } else {
-                entriesByName.set(name, [entry]);
-            }
-        });
-    
-    return Array.from(entriesByName.values())
-        .map(entries => entries.sort((a, b) => compareScores(a, b, workoutNum))[0]);
-}
+  let row = [];
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (char === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      pushCell(row);
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (current || row.length) {
+        pushCell(row);
+        pushRow(row);
+        row = [];
+      }
+      if (char === '\r' && text[i + 1] === '\n') {
+        i += 1;
+      }
+    } else {
+      current += char;
+    }
+  }
+  if (current || row.length) {
+    pushCell(row);
+    pushRow(row);
+  }
+  if (!rows.length) {
+    return [];
+  }
 
-function calculateWorkoutRanks(participants, workoutNum) {
-    // Sort participants using our comparison function
-    const sortedParticipants = [...participants].sort((a, b) => 
-        compareScores(a, b, workoutNum)
+  const headers = rows.shift().map((header) => normalizeKey(header).replace(/\s+/g, '_'));
+
+  return rows
+    .filter((cells) => cells.some((cell) => cell.trim().length))
+    .map((cells) => {
+      const record = {};
+      headers.forEach((header, idx) => {
+        record[header] = cells[idx] || '';
+      });
+      return record;
+    });
+};
+
+const normalizeDivision = (raw) => {
+  const text = normalizeKey(raw);
+  if (text.includes('master')) {
+    return { value: 'masters', label: 'Masters' };
+  }
+  if (text.includes('women') || text.includes('female') || text.includes('ladies') || text.includes('girl')) {
+    return { value: 'women', label: 'Women' };
+  }
+  return { value: 'men', label: 'Men' };
+};
+
+const buildEntriesFromRecords = (records) => {
+  if (!Array.isArray(records) || !records.length) {
+    return [];
+  }
+
+  const entries = [];
+
+  records.forEach((record, index) => {
+    const divisionData = normalizeDivision(
+      record.division || record.category || record.division_name || record.gender || 'Men',
     );
 
-    // Assign 1224 ranks
-    const ranks = {};
-    let currentRank = 1;
-    let sameRankCount = 1;
-    let lastPerformance = null;
-    let nextAvailableRank = 1; // Track the next available rank
+    const workoutRaw =
+      record.workout || record.workout_id || record.event || record.event_title || `WOD${index + 1}`;
+    const workoutId = workoutRaw.toString().trim().toUpperCase();
 
-    sortedParticipants.forEach((participant, index) => {
-        const performance = {
-            rx: participant.rx,
-            score: participant.score,
-            scoreRaw: participant.scoreRaw,
-            tiebreak: participant.tiebreak
-        };
-        
-        if (index === 0) {
-            // First participant gets rank 1
-            ranks[participant.name] = {
-                rank: currentRank,
-                score: participant.score,
-                scoreRaw: participant.scoreRaw,
-                tiebreak: participant.tiebreak,
-                rx: participant.rx,
-                workoutNum
-            };
-            lastPerformance = performance;
-        } else {
-            // Check if this performance matches the previous one
-            const sameAsPrevious = JSON.stringify(performance) === JSON.stringify(lastPerformance);
-            
-            if (sameAsPrevious) {
-                // Same performance = same rank
-                sameRankCount++;
-            } else {
-                // Different performance = new rank (skip ranks equal to number of tied athletes)
-                currentRank += sameRankCount;
-                sameRankCount = 1;
-                lastPerformance = performance;
-            }
-            
-            ranks[participant.name] = {
-                rank: currentRank,
-                score: participant.score,
-                scoreRaw: participant.scoreRaw,
-                tiebreak: participant.tiebreak,
-                rx: participant.rx,
-                workoutNum
-            };
-        }
-        nextAvailableRank = currentRank + sameRankCount; // Update next available rank
-    });
+    const name =
+      record.name || record.athlete || record.full_name || record.athlete_name || `Athlete ${index + 1}`;
+    const scoreRaw = record.score || record.result || record.time || '';
+    const tiebreakRaw =
+      record.tiebreak || record.tie_break || record.tiebreaker || record.tie || '';
 
-    // Store the next available rank in the ranks object
-    ranks.nextAvailableRank = nextAvailableRank;
-    return ranks;
-}
+    const scoreMeta = detectScoreMeta(scoreRaw);
+    const tiebreakMeta = detectScoreMeta(tiebreakRaw);
 
-function processLeaderboardData(workouts) {
-    const menData = new Map();
-    const womenData = new Map();
-    
-    // First pass: collect all participant names
-    Object.values(workouts).forEach(participants => {
-        participants.forEach(p => {
-            const data = p.category === 'men' ? menData : womenData;
-            if (!data.has(p.name)) {
-                data.set(p.name, { name: p.name, workouts: {}, points: 0 });
-            }
-        });
-    });
-    
-    // Second pass: process workouts and calculate ranks
-    Object.entries(workouts).forEach(([workoutNum, participants]) => {
-        const workoutNumber = parseInt(workoutNum);
-        const menParticipants = participants.filter(p => p.category === 'men');
-        const womenParticipants = participants.filter(p => p.category === 'women');
-        
-        // Calculate ranks for this specific workout
-        const menRanks = calculateWorkoutRanks(menParticipants, workoutNumber);
-        const womenRanks = calculateWorkoutRanks(womenParticipants, workoutNumber);
-        
-        // Apply workout data to each participant
-        menData.forEach((participant, name) => {
-            if (name in menRanks) {
-                participant.workouts[workoutNumber] = menRanks[name];
-            } else {
-                // Missing workout - assign next available rank
-                participant.workouts[workoutNumber] = {
-                    rank: menRanks.nextAvailableRank,
-                    score: 0,
-                    scoreRaw: '',
-                    tiebreak: '',
-                    rx: false,
-                    workoutNum: workoutNumber
-                };
-            }
-        });
-        
-        womenData.forEach((participant, name) => {
-            if (name in womenRanks) {
-                participant.workouts[workoutNumber] = womenRanks[name];
-            } else {
-                // Missing workout - assign next available rank
-                participant.workouts[workoutNumber] = {
-                    rank: womenRanks.nextAvailableRank,
-                    score: 0,
-                    scoreRaw: '',
-                    tiebreak: '',
-                    rx: false,
-                    workoutNum: workoutNumber
-                };
-            }
-        });
-    });
-    
-    // Calculate points and convert to arrays
-    const menArray = Array.from(menData.values());
-    const womenArray = Array.from(womenData.values());
-    
-    // Calculate points for each participant
-    menArray.forEach(participant => {
-        participant.points = Object.values(participant.workouts)
-            .reduce((sum, workout) => sum + workout.rank, 0);
-    });
-    
-    womenArray.forEach(participant => {
-        participant.points = Object.values(participant.workouts)
-            .reduce((sum, workout) => sum + workout.rank, 0);
-    });
-    
-    return {
-        menData: calculateOverallRanks(menArray),
-        womenData: calculateOverallRanks(womenArray)
+    const rxSource = record.rx ?? record.version ?? record.scaled ?? record.is_rx ?? '';
+    const rxBoolean = typeof rxSource === 'string'
+      ? ['rx', 'yes', 'true'].includes(rxSource.trim().toLowerCase())
+      : Boolean(rxSource);
+    const rxLabel = rxBoolean ? 'Yes' : 'No';
+
+    const entry = {
+      id: `${divisionData.value}-${workoutId}-${index}`,
+      division: divisionData.value,
+      divisionLabel: divisionData.label,
+      workoutId,
+      workoutTitle: workoutId,
+      name,
+      score: scoreRaw,
+      tiebreak: tiebreakRaw,
+      rx: rxLabel,
+      scoreType: scoreMeta.type,
+      scoreValue: scoreMeta.value,
+      tiebreakValue: tiebreakMeta.type === 'time' ? tiebreakMeta.value : null,
+      points: null,
+      rank: null,
     };
-}
 
-function calculateOverallRanks(data) {
-    const participants = Array.from(data.values());
-    
-    // Sort participants by points and tiebreakers
-    const sortedParticipants = [...participants].sort((a, b) => {
-        // First compare points
-        if (a.points !== b.points) {
-            return a.points - b.points;
-        }
+    entries.push(entry);
+  });
 
-        // If points are equal, compare best ranks
-        const aRanks = Object.values(a.workouts)
-            .map(w => w.rank)
-            .sort((x, y) => x - y);
-        const bRanks = Object.values(b.workouts)
-            .map(w => w.rank)
-            .sort((x, y) => x - y);
+  const buckets = new Map();
+  entries.forEach((entry) => {
+    const key = `${entry.division}__${entry.workoutId}`;
+    if (!buckets.has(key)) {
+      buckets.set(key, []);
+    }
+    buckets.get(key).push(entry);
+  });
 
-        // Compare each rank position until we find a difference
-        for (let i = 0; i < Math.min(aRanks.length, bRanks.length); i++) {
-            if (aRanks[i] !== bRanks[i]) {
-                return aRanks[i] - bRanks[i];
-            }
-        }
+  buckets.forEach((list) => {
+    list.sort(compareEntries);
+    let index = 0;
+    while (index < list.length) {
+      let groupEnd = index + 1;
+      while (
+        groupEnd < list.length &&
+        compareEntries(list[index], list[groupEnd]) === 0
+      ) {
+        groupEnd += 1;
+      }
+      const points = calculatePoints(index);
+      for (let i = index; i < groupEnd; i += 1) {
+        list[i].rank = index + 1;
+        list[i].points = points;
+      }
+      index = groupEnd;
+    }
+  });
 
-        // If tied so far, the one with more workouts wins
-        if (aRanks.length !== bRanks.length) {
-            return bRanks.length - aRanks.length;
-        }
+  return entries;
+};
 
-        // If all ranks are identical, they should tie
-        return 0;
+const compareAthletesByTotals = (a, b) => {
+  const totalDiff = (b.totalPoints ?? 0) - (a.totalPoints ?? 0);
+  if (totalDiff !== 0) {
+    return totalDiff;
+  }
+
+  const maxLen = Math.max(
+    a.sortedWorkoutPoints.length,
+    b.sortedWorkoutPoints.length,
+  );
+  for (let i = 0; i < maxLen; i += 1) {
+    const pointsA = a.sortedWorkoutPoints[i] ?? 0;
+    const pointsB = b.sortedWorkoutPoints[i] ?? 0;
+    if (pointsB !== pointsA) {
+      return pointsB - pointsA;
+    }
+  }
+  return 0;
+};
+
+const aggregateLeaderboards = (entries) => {
+  const maps = DIVISIONS.reduce((acc, division) => {
+    acc[division.value] = new Map();
+    return acc;
+  }, {});
+
+  entries.forEach((entry) => {
+    if (!maps[entry.division]) return;
+    const key = normalizeKey(entry.name);
+    if (!maps[entry.division].has(key)) {
+      maps[entry.division].set(key, {
+        name: entry.name,
+        totalPoints: 0,
+        workouts: {},
+      });
+    }
+    const athlete = maps[entry.division].get(key);
+    athlete.workouts[entry.workoutId] = {
+      score: entry.score || '—',
+      tiebreak: entry.tiebreak || '',
+      points: entry.points ?? null,
+    };
+    athlete.totalPoints += entry.points ?? 0;
+  });
+
+  return DIVISIONS.reduce((acc, division) => {
+    const athletes = Array.from(maps[division.value].values()).map(
+      (athlete) => ({
+        ...athlete,
+        sortedWorkoutPoints: Object.values(athlete.workouts)
+          .map((workout) => workout.points ?? 0)
+          .sort((a, b) => b - a),
+      }),
+    );
+
+    athletes.sort((a, b) => {
+      const result = compareAthletesByTotals(a, b);
+      if (result !== 0) return result;
+      return a.name.localeCompare(b.name);
     });
 
-    // Assign proper 1224 ranks
-    let currentRank = 1;
-    let prevPoints = null;
-    let prevRanks = null;
-    let sameRankCount = 0;
-    
-    for (let i = 0; i < sortedParticipants.length; i++) {
-        const participant = sortedParticipants[i];
-        const participantRanks = Object.values(participant.workouts)
-            .map(w => w.rank)
-            .sort((x, y) => x - y)
-            .join(','); // Convert to string for easy comparison
-        
-        if (i === 0) {
-            // First participant
-            participant.overallRank = 1;
-            prevPoints = participant.points;
-            prevRanks = participantRanks;
-            sameRankCount = 1;
+    athletes.forEach((athlete, index) => {
+      if (
+        index > 0 &&
+        compareAthletesByTotals(athletes[index - 1], athlete) === 0
+      ) {
+        athlete.rank = athletes[index - 1].rank;
+      } else {
+        athlete.rank = index + 1;
+      }
+    });
+
+    acc[division.value] = athletes;
+    return acc;
+  }, {});
+};
+
+const app = createApp({
+  setup() {
+    const state = reactive({
+      config: window.CFM_CONFIG || {},
+      entries: [],
+      workouts: DEFAULT_WORKOUTS.slice(),
+      activeDivision: DIVISIONS[0].value,
+      isLoading: true,
+      lastUpdated: null,
+      isScoreDrawerOpen: false,
+      isAdminPanelOpen: false,
+      isAdminUnlocked: false,
+      submissionState: 'idle',
+      submissionMessage: '',
+      scoreForm: {
+        name: '',
+        division: DIVISIONS[0].value,
+        workout: DEFAULT_WORKOUTS[0]?.id || '',
+        score: '',
+        tiebreak: '',
+        rx: false,
+      },
+      sort: {
+        column: 'rank',
+        direction: 'asc',
+      },
+    });
+
+    const divisionLeaderboards = computed(() => aggregateLeaderboards(state.entries));
+
+    const visibleLeaderboard = computed(() => {
+      const list = divisionLeaderboards.value[state.activeDivision] || [];
+      const { column, direction } = state.sort;
+      const multiplier = direction === 'asc' ? 1 : -1;
+
+      const getWorkoutPoints = (athlete, workoutId) =>
+        athlete.workouts[workoutId]?.points ?? -1;
+
+      return [...list].sort((a, b) => {
+        let valueA;
+        let valueB;
+
+        if (column === 'rank') {
+          valueA = a.rank ?? Infinity;
+          valueB = b.rank ?? Infinity;
+        } else if (column === 'totalPoints') {
+          valueA = a.totalPoints ?? 0;
+          valueB = b.totalPoints ?? 0;
+        } else if (column.startsWith('workout:')) {
+          const workoutId = column.split(':')[1];
+          valueA = getWorkoutPoints(a, workoutId);
+          valueB = getWorkoutPoints(b, workoutId);
         } else {
-            const samePerformance = 
-                participant.points === prevPoints && 
-                participantRanks === prevRanks;
-                
-            if (samePerformance) {
-                // Same rank as previous
-                participant.overallRank = currentRank;
-                sameRankCount++;
-            } else {
-                // New rank = previous rank + number with that rank
-                currentRank += sameRankCount;
-                participant.overallRank = currentRank;
-                prevPoints = participant.points;
-                prevRanks = participantRanks;
-                sameRankCount = 1;
-            }
-        }
-    }
-
-    return sortedParticipants;
-}
-
-function renderTable(data, tableId) {
-    const table = document.getElementById(tableId);
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    data.forEach(participant => {
-        const workoutCells = [1, 2, 3].map(workoutNum => {
-            const workout = participant.workouts[workoutNum];
-            if (!workout) {
-                return '<td></td>';
-            }
-            
-            // If no score (missing workout), show the rank they get for missing it
-            if (!workout.scoreRaw && !workout.tiebreak) {
-                return `
-                    <td>
-                        <div class="workout-cell">
-                            <span class="workout-rank">${workout.rank}</span>
-                            <span class="workout-score">—</span>
-                        </div>
-                    </td>
-                `;
-            }
-            
-            // For workout 2:
-            // - Show tiebreak if it exists
-            // - For rep scores without tiebreak, show default 12:00
-            let tiebreakToShow = workout.tiebreak;
-            if (workoutNum === 2 && !isTimeFormat(workout.scoreRaw) && !workout.tiebreak) {
-                tiebreakToShow = '12:00';
-            }
-            
-            // For workout 3, add default tiebreak of 20:00 if not provided
-            if (workoutNum === 3 && !workout.tiebreak) {
-                if (!isTimeFormat(workout.scoreRaw)) {
-                    workout.tiebreak = '20:00';
-                }
-            }
-            
-            // For workout 2, keep existing logic for default tiebreak of 12:00
-            else if (workoutNum === 2 && !workout.tiebreak) {
-                if (!isTimeFormat(workout.scoreRaw)) {
-                    workout.tiebreak = '12:00';
-                }
-            }
-            
-            return `
-                <td>
-                    <div class="workout-cell">
-                        <span class="workout-rank">${workout.rank}</span>
-                        <span class="workout-rx">${workout.rx ? 'rx' : 'sc'}</span>
-                        <span class="workout-score">
-                            ${workout.scoreRaw}${tiebreakToShow ? 
-                                `<span class="workout-tiebreak">(${tiebreakToShow})</span>` : 
-                                ''}
-                        </span>
-                    </div>
-                </td>
-            `;
-        }).join('');
-        
-        const row = `
-            <tr>
-            <td>${participant.name}</td>
-                <td class="overall-rank">${participant.overallRank}</td>
-                <td class="overall-points">${participant.points}</td>
-                ${workoutCells}
-            </tr>
-        `;
-        tbody.innerHTML += row;
-    });
-}
-
-window.showTab = function(tabId) {
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content, .table-container');
-    
-    tabs.forEach(tab => tab.classList.remove('active'));
-    tabContents.forEach(content => content.classList.remove('active'));
-    
-    document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
-    document.getElementById(`${tabId}-content`)?.classList.add('active');
-    document.getElementById(`${tabId}-container`)?.classList.add('active');
-    
-    if (tabId === 'workouts') {
-        document.getElementById('workout-subtabs').classList.add('active');
-    } else {
-        document.getElementById('workout-subtabs').classList.remove('active');
-    }
-};
-
-    window.showWorkout = function(workoutNumber) {
-    	const workoutDetails = document.getElementById('workout-details');
-    
-    // Fetch the workout description from the corresponding file
-    fetch(`25_${workoutNumber}.txt`)
-        .then(response => response.text())
-        .then(data => {
-            workoutDetails.innerHTML = data.replace(/\n/g, '<br>');
-        })
-        .catch(error => {
-            console.error('Error loading workout:', error);
-            workoutDetails.innerHTML = 'Error loading workout details';
-        });
-
-    const subtabs = document.querySelectorAll('#workout-subtabs .subtab');
-    subtabs.forEach(subtab => subtab.classList.remove('active'));
-    document.querySelector(`#workout-subtabs .subtab[onclick="showWorkout(${workoutNumber})"]`).classList.add('active');
-};
-
-let currentSort = {
-    column: null,
-    direction: null
-};
-
-window.sortTable = function(tableId, column) {
-    const table = document.getElementById(tableId);
-    
-    // Set initial direction or toggle existing
-    if (currentSort.column !== column) {
-        currentSort.column = column;
-        currentSort.direction = 'asc';  // Always start with ascending
-    } else {
-        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-    }
-
-    // Update header arrows
-    const headers = table.querySelectorAll('th');
-    headers.forEach(header => {
-        header.classList.remove('sorted-asc', 'sorted-desc');
-    });
-    const currentHeader = table.querySelector(`th[onclick="sortTable('${tableId}', '${column}')"]`);
-    currentHeader.classList.add(`sorted-${currentSort.direction}`);
-
-        const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-
-    // Sort the rows
-        rows.sort((a, b) => {
-        let valueA, valueB;
-
-        switch(column) {
-            case 'name':
-                valueA = a.cells[0].textContent;
-                valueB = b.cells[0].textContent;
-                return currentSort.direction === 'asc' 
-                    ? valueA.localeCompare(valueB)
-                    : valueB.localeCompare(valueA);
-
-            case 'rank':
-                valueA = parseInt(a.cells[1].textContent);
-                valueB = parseInt(b.cells[1].textContent);
-                break;
-
-            case 'points':
-                valueA = parseInt(a.cells[2].textContent);
-                valueB = parseInt(b.cells[2].textContent);
-                break;
-
-            case 'workout1':
-            case 'workout2':
-            case 'workout3':
-                const workoutIndex = parseInt(column.slice(-1));
-                valueA = parseInt(a.cells[workoutIndex + 2].querySelector('.workout-rank').textContent);
-                valueB = parseInt(b.cells[workoutIndex + 2].querySelector('.workout-rank').textContent);
-                break;
+          valueA = a.name;
+          valueB = b.name;
         }
 
-        if (currentSort.direction === 'asc') {
-            return valueA - valueB;
-            } else {
-            return valueB - valueA;
-            }
-        });
+        if (valueA === valueB) {
+          return a.name.localeCompare(b.name);
+        }
 
-    // Reinsert rows in new order
-        rows.forEach(row => tbody.appendChild(row));
-};
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+          return (valueA - valueB) * multiplier;
+        }
 
-// Add function to parse kids CSV
-function parseKidsCSV(csvText) {
-    const kidsData = [];
-    
-    csvText.split('\n')
-        .slice(1)  // Skip header
-        .filter(row => row.trim())
-        .forEach(row => {
-            const [name, age, score, weight] = row.split(',').map(cell => cell.trim());
-            kidsData.push({
-                name,
-                age: age || '',
-                score,
-                weight
-            });
-        });
-    
-    return kidsData;
-}
-
-// Update function to render kids table
-function renderKidsTable(data, tableId) {
-    const table = document.getElementById(tableId);
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    data.forEach(kid => {
-        const row = `
-            <tr>
-                <td>${kid.name}</td>
-                <td>${kid.age}</td>
-                <td>
-                    <div class="kids-workout-cell">
-                        <span class="kids-workout-score">${kid.score}</span>
-                        <span class="workout-weight">(${kid.weight}kg)</span>
-                    </div>
-                </td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
+        return valueA.toString().localeCompare(valueB.toString()) * multiplier;
+      });
     });
-}
+    const workoutColumns = computed(() => state.workouts);
+
+    const lastUpdatedLabel = computed(() => {
+      if (!state.lastUpdated) return '—';
+      return new Date(state.lastUpdated).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+    });
+
+    watch(
+      () => state.activeDivision,
+      (value) => {
+        state.scoreForm.division = value;
+      },
+      { immediate: true },
+    );
+
+    watch(
+      () => state.workouts.map((workout) => workout.id),
+      (ids) => {
+        if (!ids.length) {
+          state.scoreForm.workout = '';
+          return;
+        }
+        if (!ids.includes(state.scoreForm.workout)) {
+          state.scoreForm.workout = ids[0];
+        }
+      },
+      { immediate: true },
+    );
+
+    const toggleScoreDrawer = (open) => {
+      state.isScoreDrawerOpen = open;
+      if (open) {
+        state.submissionState = 'idle';
+        state.submissionMessage = '';
+      }
+    };
+
+    const changeSort = (column) => {
+      if (state.sort.column === column) {
+        state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
+        return;
+      }
+
+      const defaultDirection =
+        column === 'rank' ? 'asc' : column === 'totalPoints' || column.startsWith('workout:') ? 'desc' : 'asc';
+
+      state.sort.column = column;
+      state.sort.direction = defaultDirection;
+    };
+
+    const getSortClass = (column) => {
+      if (state.sort.column !== column) return '';
+      return `sorted-${state.sort.direction}`;
+    };
+
+    const openAdminPanel = () => {
+      if (!state.isAdminUnlocked) {
+        const input = window.prompt('Enter admin password');
+        const expected = state.config.adminPassword || 'cfm-admin';
+        if (input !== expected) {
+          window.alert('Incorrect password');
+          return;
+        }
+        state.isAdminUnlocked = true;
+      }
+      state.isAdminPanelOpen = true;
+    };
+
+    const closeAdminPanel = () => {
+      state.isAdminPanelOpen = false;
+    };
+
+    const loadWorkouts = async () => {
+      try {
+        const response = await fetch(WORKOUTS_PATH, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Unable to fetch workouts.json');
+        const data = await response.json();
+        if (Array.isArray(data) && data.length) {
+        state.workouts = data.map((workout, idx) =>
+          normalizeWorkoutDefinition(workout, idx),
+        );
+          return;
+        }
+        throw new Error('Workouts file empty');
+      } catch (error) {
+        console.warn('Falling back to default workouts', error);
+        state.workouts = DEFAULT_WORKOUTS.slice();
+      }
+    };
+
+    const fetchRecords = async () => {
+      if (!state.config.leaderboardFeed) {
+        state.entries = [];
+        state.isLoading = false;
+        state.lastUpdated = null;
+        return;
+      }
+
+      state.isLoading = true;
+      try {
+        const response = await fetch(state.config.leaderboardFeed, {
+          cache: 'no-store',
+        });
+        const rawPayload = await response.text();
+
+        let records = tryParseJson(rawPayload);
+        if (records && !Array.isArray(records)) {
+          records = records.records || records.rows || records.data || [];
+        }
+
+        if (!records || !records.length) {
+          records = parseCsv(rawPayload);
+        }
+
+        state.entries = buildEntriesFromRecords(records);
+        state.lastUpdated = new Date().toISOString();
+      } catch (error) {
+        console.error('Unable to fetch leaderboard feed', error);
+        state.entries = [];
+      } finally {
+        state.isLoading = false;
+      }
+    };
+
+    const submitScore = async () => {
+      if (!state.config.scoreEndpoint) {
+        state.submissionState = 'error';
+        state.submissionMessage = 'Add a scoreEndpoint URL inside config.js to enable submissions.';
+        return;
+      }
+
+      state.submissionState = 'sending';
+      state.submissionMessage = 'Sending score to your endpoint…';
+
+      const payload = {
+        division: state.scoreForm.division,
+        workout: state.scoreForm.workout,
+        name: state.scoreForm.name,
+        score: state.scoreForm.score,
+        tiebreak: state.scoreForm.tiebreak,
+        rx: state.scoreForm.rx ? 'Yes' : 'No',
+      };
+
+      if (state.config.submissionToken) {
+        payload.token = state.config.submissionToken;
+      }
+
+      try {
+        const response = await fetch(state.config.scoreEndpoint, {
+          method: 'POST',
+          headers: (() => {
+            const headers = { ...(state.config.scoreEndpointHeaders || {}) };
+            const hasContentType = Object.keys(headers).some(
+              (key) => key.toLowerCase() === 'content-type',
+            );
+            if (!hasContentType) {
+              headers['Content-Type'] = 'text/plain;charset=utf-8';
+            }
+            return headers;
+          })(),
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const details = await response.text();
+          throw new Error(details || 'Endpoint responded with an error.');
+        }
+
+        state.submissionState = 'success';
+        state.submissionMessage =
+          'Score submitted. Refresh the leaderboard once the sheet updates.';
+        state.scoreForm.name = '';
+        state.scoreForm.score = '';
+        state.scoreForm.tiebreak = '';
+        state.scoreForm.rx = false;
+      } catch (error) {
+        state.submissionState = 'error';
+        state.submissionMessage = error.message || 'Something went wrong while submitting.';
+      }
+    };
+
+    const refreshData = async () => {
+      await fetchRecords();
+    };
+
+    onMounted(async () => {
+      await loadWorkouts();
+      state.scoreForm.workout = state.workouts[0]?.id || '';
+      await refreshData();
+    });
+
+    const stateRefs = toRefs(state);
+
+    return {
+      config: stateRefs.config,
+      workouts: workoutColumns,
+      entries: stateRefs.entries,
+      activeDivision: stateRefs.activeDivision,
+      divisionSummary: divisionSummaryLabel,
+      divisionTabs: DIVISIONS,
+      visibleLeaderboard,
+      isLoading: computed(() => state.isLoading),
+      lastUpdatedLabel,
+      isScoreDrawerOpen: computed(() => state.isScoreDrawerOpen),
+      isAdminPanelOpen: computed(() => state.isAdminPanelOpen),
+      toggleScoreDrawer,
+      openAdminPanel,
+      closeAdminPanel,
+      refreshData,
+      scoreForm: stateRefs.scoreForm,
+      submitScore,
+      submissionState: computed(() => state.submissionState),
+      submissionMessage: computed(() => state.submissionMessage),
+      changeSort,
+      getSortClass,
+    };
+  },
+});
+
+app.mount('#app');

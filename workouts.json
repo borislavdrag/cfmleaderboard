@@ -1,0 +1,37 @@
+[
+  {
+    "id": "WOD1",
+    "title": "Get Your Sixpack",
+    "focus": "For Time",
+    "description": "3 rounds:\n50 Double Unders / 150 Single Unders\n20 alt. Dumbbell Snatches\n20 Toes-to-bar\n\nTime Cap: 12min",
+    "status": "Announced"
+  },
+  {
+    "id": "WOD2",
+    "title": "Clean The Dancefloor",
+    "focus": "4 Sets for Total Weight",
+    "description": "1min on/1 min off\nBuy In: 10/8 cal Assault Bike\nSet 1: 8 cleans\nSet 2: 6 cleans\nSet 3: 4 cleans\nSet 4: 2 cleans",
+    "status": "Announced"
+  },
+  {
+    "id": "WOD3",
+    "title": "The Lung(es)",
+    "focus": "For Time",
+    "description": "60/45 Cal Row\n60 Deadlifts @60/40\n30 Lunge Wall Balls @9/6\n30 Burpees Over Barbell*\n15 Thrusters*\n15 BMU*\n\n*Tiebreaker Time after Burpees and after Thrusters\n\nTime Cap: 15min",
+    "status": "Announced"
+  },
+  {
+    "id": "WOD4",
+    "title": "Climb & Duck",
+    "focus": "Semifinal",
+    "description": "-",
+    "status": "Not Announced"
+  },
+  {
+    "id": "WOD5",
+    "title": "Head, Shoulders, Knees, and Back",
+    "focus": "Final",
+    "description": "-",
+    "status": "Not Announced"
+  }
+]

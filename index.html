@@ -1,91 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friday Night Lights</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Friday Night Lights — Live Leaderboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="cfm.jpeg">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header-area">
-            <div class="sponsor-column">
-                <div class="sponsor-text">Presented by:</div>
-                <img src="nocco.png" alt="Nocco Logo" class="partner-logo">
-            </div>
-            <div class="main-header">
-                <div class="header">
-                    <div class="header-center">
-                        <img src="cfm.jpeg" alt="CrossFit Munich Logo" class="logo">
-                        <h1>Friday Night Lights</h1>
-                    </div>
-                </div>
-                <div class="tabs">
-                    <div class="tab active" onclick="showTab('men')">Men</div>
-                    <div class="tab" onclick="showTab('women')">Women</div>
-                    <div class="tab" onclick="showTab('kids')">Kids</div>
-                    <div class="tab" onclick="showTab('workouts')">Workouts</div>
-                    <a href="https://forms.gle/fzqG786UrmjbCauq5" target="_blank" class="score-entry-button">Enter Score</a>
-                </div>
-            </div>
-            <div class="sponsor-column">
-                <div class="sponsor-text">Presented by:</div>
-                <img src="barbells.png" alt="Barbells Logo" class="partner-logo">
-            </div>
+  <div id="app" class="page" v-cloak>
+    <div class="backdrop"></div>
+
+    <header class="hero">
+      <div class="hero__top">
+        <div class="hero__brand">
+          <img src="cfm.jpeg" alt="CrossFit Munich logo" class="hero__logo">
+          <div>
+            <p class="hero__eyebrow">CrossFit Munich Vereinsmeisterschaft 2025</p>
+            <h1>Leaderboard</h1>
+            <p class="hero__subtitle">Live scoring for all workouts and divisions.</p>
+          </div>
         </div>
-        <div class="subtabs" id="workout-subtabs">
-            <div class="subtab" onclick="showWorkout(1)">Workout 25.1</div>
-            <div class="subtab" onclick="showWorkout(2)">Workout 25.2</div>
-            <div class="subtab" onclick="showWorkout(3)">Workout 25.3</div>
+        <div class="hero__actions">
+          <div class="sync-chip">
+            <span>Last sync</span>
+            <strong>{{ lastUpdatedLabel }}</strong>
+          </div>
+          <button class="primary-btn" @click="openAdminPanel">
+            Admin panel
+          </button>
         </div>
-        <div class="tab-content" id="workouts-content">
-            <div id="workout-details"></div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="dashboard-card">
+        <div class="dashboard-card__head">
+          <div>
+            <p class="eyebrow">Live leaderboard</p>
+            <h2>Division standings</h2>
+          </div>
+          <div class="division-tabs">
+            <button
+              v-for="division in divisionTabs"
+              :key="division.value"
+              :class="['division-tabs__btn', { active: activeDivision === division.value }]"
+              @click="activeDivision = division.value"
+            >
+              {{ division.label }}
+            </button>
+          </div>
         </div>
-        <div class="table-container active" id="men-container">
-            <table id="men">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('men', 'name')">Name</th>
-                        <th onclick="sortTable('men', 'rank')">Rank</th>
-                        <th onclick="sortTable('men', 'points')">Points</th>
-                        <th onclick="sortTable('men', 'workout1')">Workout 25.1</th>
-                        <th onclick="sortTable('men', 'workout2')">Workout 25.2</th>
-                        <th onclick="sortTable('men', 'workout3')">Workout 25.3</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+
+        <div class="table-wrapper" v-if="visibleLeaderboard.length">
+          <table>
+            <thead>
+              <tr>
+                <th
+                  class="sortable"
+                  :class="getSortClass('rank')"
+                  @click="changeSort('rank')"
+                >
+                  Rank
+                </th>
+                <th>Name</th>
+                <th
+                  class="sortable"
+                  :class="getSortClass('totalPoints')"
+                  @click="changeSort('totalPoints')"
+                >
+                  Total Points
+                </th>
+                <th
+                  v-for="workout in workouts"
+                  :key="`col-${workout.id}`"
+                  class="sortable"
+                  :class="getSortClass(`workout:${workout.id}`)"
+                  @click="changeSort(`workout:${workout.id}`)"
+                >
+                  {{ workout.title }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="athlete in visibleLeaderboard" :key="athlete.name">
+                <td class="rank-cell">#{{ athlete.rank }}</td>
+                <td>
+                  <div class="athlete-cell">
+                    <p class="athlete-name">{{ athlete.name }}</p>
+                  </div>
+                </td>
+                <td class="points-cell">{{ athlete.totalPoints || '—' }}</td>
+                <td v-for="workout in workouts" :key="`${athlete.name}-${workout.id}`">
+                  <div v-if="athlete.workouts[workout.id]" class="workout-cell">
+                    <span class="workout-score">{{ athlete.workouts[workout.id].score }}</span>
+                    <span class="workout-meta">
+                      <template v-if="athlete.workouts[workout.id].tiebreak">
+                        TB {{ athlete.workouts[workout.id].tiebreak }}
+                      </template>
+                      <template v-else>&nbsp;</template>
+                    </span>
+                    <span class="workout-points">
+                      {{ athlete.workouts[workout.id].points ?? '—' }} pts
+                    </span>
+                  </div>
+                  <span v-else class="workout-cell workout-cell--empty">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="table-container" id="women-container">
-            <table id="women">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('women', 'name')">Name</th>
-                        <th onclick="sortTable('women', 'rank')">Rank</th>
-                        <th onclick="sortTable('women', 'points')">Points</th>
-                        <th onclick="sortTable('women', 'workout1')">Workout 25.1</th>
-                        <th onclick="sortTable('women', 'workout2')">Workout 25.2</th>
-                        <th onclick="sortTable('women', 'workout3')">Workout 25.3</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="empty-state" v-else>
+          <p>No scores yet for this division. Add a score to your sheet or submit one from the admin panel.</p>
         </div>
-        <div id="kids-container" class="table-container">
-            <table id="kids">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Age</th>
-                        <th>Workout 25.1</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Kids data will be inserted here -->
-                </tbody>
-            </table>
+      </section>
+
+      <section class="workout-grid">
+        <article
+          class="workout-card"
+          v-for="workout in workouts"
+          :key="`card-${workout.id}`"
+        >
+          <div class="workout-card__badge">{{ workout.id }}</div>
+          <h3>{{ workout.title }}</h3>
+          <p class="workout-card__focus">{{ workout.focus }}</p>
+          <p class="workout-card__desc" v-html="workout.description.replace(/\n/g, '<br>')"></p>
+          <div class="workout-card__footer">
+            <span>{{ workout.status }}</span>
+          </div>
+        </article>
+      </section>
+
+    </main>
+
+    <transition name="admin-panel">
+      <aside v-if="isAdminPanelOpen" class="admin-panel">
+        <header class="admin-panel__head">
+          <div>
+            <p class="eyebrow">Restricted access</p>
+            <h3>Event admin panel</h3>
+          </div>
+          <button class="close-btn" @click="closeAdminPanel">Close</button>
+        </header>
+        <section class="status-grid">
+          <article class="status-card">
+            <p class="status-card__label">Leaderboard feed</p>
+            <h3 class="status-card__value">
+              {{ config.leaderboardFeed ? 'Connected' : 'Awaiting link' }}
+            </h3>
+            <p class="status-card__body">
+              Drop a published Google Sheet URL into <code>config.js</code> and the table will hydrate automatically.
+            </p>
+          </article>
+          <article class="status-card">
+            <p class="status-card__label">Score intake</p>
+            <h3 class="status-card__value">
+              {{ config.scoreEndpoint ? 'Web app ready' : 'Endpoint pending' }}
+            </h3>
+            <p class="status-card__body">
+              Use the built-in drawer to capture results and push them into Sheets, Airtable or any HTTPS endpoint.
+            </p>
+          </article>
+          <article class="status-card">
+            <p class="status-card__label">Mobile experience</p>
+            <h3 class="status-card__value">Adaptive layout</h3>
+            <p class="status-card__body">
+              Tabs collapse into pills, the drawer becomes full-screen, and tables stay scrollable with sticky headers.
+            </p>
+          </article>
+        </section>
+        <div class="admin-panel__actions">
+          <button class="ghost-btn" @click="refreshData" :disabled="isLoading">
+            <span v-if="!isLoading">Refresh data</span>
+            <span v-else>Loading…</span>
+          </button>
+          <button class="primary-btn" @click="toggleScoreDrawer(true)">
+            Submit a score
+          </button>
         </div>
-    </div>
-    <script src="script.js"></script>
+      </aside>
+    </transition>
+    <div class="admin-panel-overlay" v-if="isAdminPanelOpen" @click="closeAdminPanel"></div>
+
+    <transition name="drawer">
+      <aside v-if="isScoreDrawerOpen" class="score-drawer">
+        <header class="score-drawer__head">
+          <div>
+            <p class="eyebrow">Manual entry</p>
+            <h3>Submit a score</h3>
+          </div>
+          <button class="close-btn" @click="toggleScoreDrawer(false)">Close</button>
+        </header>
+
+        <form class="score-form" @submit.prevent="submitScore">
+          <label>
+            Athlete name
+            <input type="text" v-model="scoreForm.name" required placeholder="e.g. Alex M.">
+          </label>
+          <label>
+            Division
+            <select v-model="scoreForm.division" required>
+              <option v-for="division in divisionTabs" :key="`form-${division.value}`" :value="division.value">
+                {{ division.label }}
+              </option>
+            </select>
+          </label>
+          <label>
+            Workout
+            <select v-model="scoreForm.workout" required>
+              <option disabled value="">Select workout</option>
+              <option v-for="workout in workouts" :key="`form-workout-${workout.id}`" :value="workout.id">
+                {{ workout.title }}
+              </option>
+            </select>
+          </label>
+          <label>
+            Score
+            <input type="text" v-model="scoreForm.score" required placeholder="Time, reps or weight">
+          </label>
+          <label>
+            Tie-break (time)
+            <input type="text" v-model="scoreForm.tiebreak" placeholder="e.g. 12:34">
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" v-model="scoreForm.rx">
+            <span>RX complete</span>
+          </label>
+          <button class="primary-btn" type="submit" :disabled="submissionState === 'sending'">
+            <span v-if="submissionState === 'idle'">Send to sheet</span>
+            <span v-else-if="submissionState === 'sending'">Submitting…</span>
+            <span v-else>Submitted ✅</span>
+          </button>
+
+          <p v-if="submissionMessage" class="form-feedback" :class="submissionState">
+            {{ submissionMessage }}
+          </p>
+        </form>
+      </aside>
+    </transition>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
