@@ -10,6 +10,13 @@ const {
 const WORKOUTS_PATH = 'workouts.json';
 const POINTS_BASE = 100;
 const POINTS_STEP = 3;
+const POINT_SCALE_OVERRIDES = {
+  WOD5: {
+    men: { base: 100, step: 10 },
+    women: { base: 100, step: 25 },
+    masters: { base: 100, step: 25 },
+  },
+};
 
 const DIVISIONS = [
   { value: 'men', label: 'Men' },
@@ -102,7 +109,15 @@ const compareEntries = (a, b) => {
   return 0;
 };
 
-const calculatePoints = (rankIndex) => Math.max(0, POINTS_BASE - POINTS_STEP * rankIndex);
+const getPointScale = (workoutId, division) =>
+  POINT_SCALE_OVERRIDES[workoutId]?.[division] || null;
+
+const calculatePoints = (rankIndex, workoutId, division) => {
+  const scale = getPointScale(workoutId, division);
+  const base = scale?.base ?? POINTS_BASE;
+  const step = scale?.step ?? POINTS_STEP;
+  return Math.max(0, base - step * rankIndex);
+};
 
 const tryParseJson = (payload) => {
   try {
@@ -255,7 +270,8 @@ const buildEntriesFromRecords = (records) => {
       ) {
         groupEnd += 1;
       }
-      const points = calculatePoints(index);
+      const baseEntry = list[index];
+      const points = calculatePoints(index, baseEntry.workoutId, baseEntry.division);
       for (let i = index; i < groupEnd; i += 1) {
         list[i].rank = index + 1;
         list[i].points = points;
