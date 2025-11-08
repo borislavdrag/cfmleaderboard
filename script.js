@@ -9,7 +9,7 @@ const {
 
 const WORKOUTS_PATH = 'workouts.json';
 const POINTS_BASE = 100;
-const POINTS_STEP = 5;
+const POINTS_STEP = 3;
 
 const DIVISIONS = [
   { value: 'men', label: 'Men' },
